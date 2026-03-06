@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RADAR 5/5 - 10€ Edition</title>
+    <style>
+        :root {
+            --win: #27ae60; --loss: #e74c3c; --accent: #f1c40f;
+            --bg: #0a0a0a; --card: #151515; --overlay: rgba(0,0,0,0.95);
+            --gold-multi: #ffcc00;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background-color: var(--bg); color: white;
+            height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+        }
+
+        .container {
+            width: 100%; max-width: 500px; height: calc(100% - 40px);
+            background: var(--card); display: flex; position: relative;
+            border-left: 1px solid #333; border-right: 1px solid #333;
+        }
+
+        .sidebar {
+            width: 110px; background: #000; border-right: 2px solid #333;
+            display: flex; flex-direction: column; padding: 10px; gap: 8px;
+            font-size: 0.55em; text-align: center;
+        }
+
+        .section-title { color: #444; font-weight: 900; font-size: 0.9em; margin-top: 10px; border-bottom: 1px solid #222; padding-bottom: 3px; }
+        .side-block { background: #111; padding: 8px 4px; border-radius: 6px; border: 1px solid #222; }
+        .side-label { color: #666; font-size: 0.8em; display: block; text-transform: uppercase; }
+        .side-val { font-weight: bold; color: var(--accent); font-size: 1.4em; display: block; }
+        .val-solde { color: var(--win); border: 2px solid var(--win); background: #001a00; }
+
+        .game-zone { flex: 1; display: flex; flex-direction: column; padding: 12px; position: relative; }
+        .grid-master { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+        
+        .sq {
+            width: 100%; aspect-ratio: 1/1;
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px solid #333; position: relative; overflow: hidden;
+        }
+
+        .sq.open { background: #fff !important; border: none; color: #000; }
+        .sq.revealed { opacity: 0.4; }
+        
+        .sq.target-gold { 
+            background: var(--gold-multi) !important; color: #000; 
+            font-weight: 900; font-size: 2.2em;
+        }
+        .sq.target-gold span { font-size: 0.4em; display: inline; margin-left: 2px; }
+        .sq.target-loss { background: #333 !important; border: none; color: #111; font-size: 2em; }
+
+        .sq-btns { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 5px; gap: 5px; }
+        .btn-tile {
+            border: none; border-radius: 6px; color: white;
+            font-size: 0.65em; font-weight: 900; cursor: pointer;
+            text-transform: uppercase; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-tile-scratch { flex: 2; background: #444; }
+        .btn-tile-bet { flex: 1; background: var(--win); }
+        .btn-tile:disabled { opacity: 0.05; cursor: default; }
+
+        .terminal {
+            background: #000; border-top: 2px solid #333;
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            height: 150px; padding: 20px; border-radius: 20px 20px 0 0;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        .btn-main { padding: 18px; border: none; border-radius: 12px; color: white; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1.1em; background: var(--accent); color: black; }
+        .btn-main:active { transform: scale(0.98); }
+
+        .footer-info {
+            width: 100%; max-width: 500px; height: 40px; background: #000;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65em; color: #555; gap: 15px; border-top: 1px solid #222;
+        }
+
+        #custom-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); backdrop-filter: blur(8px); z-index: 500; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 30px; }
+        .modal-box { background: #1a1a1a; padding: 25px; border-radius: 20px; border: 3px solid var(--accent); text-align: center; width: 100%; }
+
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%,100%{transform:rotate(0);} 25%{transform:rotate(-2deg);} 75%{transform:rotate(2deg);} }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="custom-modal">
+        <div class="modal-box">
+            <h2 id="mod-title" style="font-size: 1.8em; color: var(--accent);"></h2>
+            <p id="mod-text" style="margin:15px 0; font-family: sans-serif; font-size: 0.9em;"></p>
+            <button class="btn-main" onclick="closeMod()">OK</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="section-title">ÉTAT</div>
+        <div class="side-block val-solde">
+            <span class="side-label">SOLDE</span>
+            <span class="side-val" id="bal">100.00</span>€
+        </div>
+        <div class="side-block">
+            <span class="side-label">TAXES</span>
+            <span class="side-val" id="global-tax" style="color:var(--loss)">0.00</span>€
+        </div>
+        <div class="section-title">GAINS</div>
+        <div class="side-block">
+            <span id="golds-found-ui" class="side-val" style="font-size: 1.6em;">0/4</span>
+            <span class="side-label">BRÛLÉS</span>
+        </div>
+        <label style="font-size: 0.7em; color: #444; margin-top: 10px; cursor:pointer;">
+            <input type="checkbox" id="sound-on" checked> SON
+        </label>
+    </div>
+
+    <div class="game-zone">
+        <div id="grid" class="grid-master"></div>
+
+        <div class="terminal">
+            <div id="buy-zone">
+                <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER UN TICKET (10€)</button>
+            </div>
+            <div id="res-zone" style="display:none; text-align:center;">
+                <div id="res-msg" style="font-size: 1.2em; margin-bottom:10px;"></div>
+                <div style="font-size: 0.7em; color: var(--accent); font-weight:bold;">Révélation des cases...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer-info">
+    <span>GRATTAGE: 0.10€</span>
+    <span>|</span>
+    <span>MISE: GRATUITE</span>
+    <span>|</span>
+    <span>LOTS: 10€, 10€, 20€, 50€</span>
+</div>
+
+<script>
+    let solde = 100, ticket = [], isGameOver = false;
+    let globalTaxes = 0, currentMise = 10;
+    let goldsFound = 0;
+    
+    const SCRATCH_FEE = 0.10;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type, duration, vol=0.1) {
+        if (!document.getElementById('sound-on').checked) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function soundClick() { playSound(600, 'sine', 0.05); }
+    function soundWin() { playSound(800, 'triangle', 0.3); setTimeout(() => playSound(1200, 'triangle', 0.5), 100); }
+    function soundLoss() { playSound(100, 'sawtooth', 0.5); }
+
+    function notify(t, txt, cb) {
+        document.getElementById('mod-title').innerText = t;
+        document.getElementById('mod-text').innerText = txt;
+        document.getElementById('custom-modal').style.display = 'flex';
+        window.modCallback = cb;
+    }
+    function closeMod() { document.getElementById('custom-modal').style.display = 'none'; if(window.modCallback) window.modCallback(); }
+
+    function upd() {
+        document.getElementById('bal').innerText = solde.toFixed(2);
+        document.getElementById('global-tax').innerText = globalTaxes.toFixed(2);
+        document.getElementById('golds-found-ui').innerText = `${goldsFound}/4`;
+    }
+
+    function buy() {
+        if(solde < currentMise) return notify("SOLDE BAS", "Veuillez recharger.");
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        solde -= currentMise; soundClick();
+        isGameOver = false; goldsFound = 0;
+        document.getElementById('buy-zone').style.display='none';
+        document.getElementById('res-zone').style.display='none';
+        init(); upd();
+    }
+
+    function init() {
+        const g = document.getElementById('grid'); g.innerHTML = '';
+        ticket = [50, 20, 10, 10, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
+        for(let i=0; i<9; i++) {
+            let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
+            s.innerHTML = `
+                <div class="sq-btns" id="btns-${i}">
+                    <button class="btn-tile btn-tile-scratch" onclick="scratch(${i})">GRATTER</button>
+                    <button class="btn-tile btn-tile-bet" onclick="placeBet(${i})">MISER</button>
+                </div>
+            `;
+            g.appendChild(s);
+        }
+    }
+
+    function revealAll() {
+        for(let i=0; i<9; i++) {
+            const sq = document.getElementById(`sq-${i}`);
+            const btns = document.getElementById(`btns-${i}`);
+            if(btns) btns.style.display = 'none';
+            if(!sq.classList.contains('open')) {
+                sq.classList.add('open', 'revealed');
+                fillTile(sq, i);
+            }
+        }
+        setTimeout(() => {
+            document.getElementById('res-zone').style.display = 'none';
+            document.getElementById('buy-zone').style.display = 'block';
+        }, 2000);
+    }
+
+    function fillTile(el, idx) {
+        if(ticket[idx] > 0) {
+            el.innerHTML = `${ticket[idx]}<span>€</span>`;
+            el.classList.add('target-gold');
+        } else {
+            el.innerText = 'X';
+            el.classList.add('target-loss');
+        }
+    }
+
+    function scratch(idx) {
+        if(isGameOver || goldsFound >= 4) return;
+        const sq = document.getElementById(`sq-${idx}`);
+        if(solde < SCRATCH_FEE) return notify("SOLDE BAS", "Plus de monnaie.");
+        
+        solde -= SCRATCH_FEE; globalTaxes += SCRATCH_FEE;
+        document.getElementById(`btns-${idx}`).style.display = 'none';
+        sq.classList.add('open');
+        fillTile(sq, idx);
+
+        if(ticket[idx] > 0) {
+            goldsFound++;
+            if (goldsFound >= 4) {
+                isGameOver = true; soundLoss();
+                endGame("TICKET ÉPUISÉ", "Toutes les valeurs ont été révélées.");
+                revealAll();
+            } else {
+                playSound(400, 'sine', 0.1); upd();
+            }
+        } else {
+            soundClick(); upd();
+        }
+    }
+
+    function placeBet(idx) {
+        if(isGameOver) return;
+        isGameOver = true;
+        const sq = document.getElementById(`sq-${idx}`);
+        document.getElementById(`btns-${idx}`).style.display = 'none';
+        sq.classList.add('open');
+        fillTile(sq, idx);
+
+        if(ticket[idx] > 0) {
+            const win = ticket[idx];
+            solde += win; soundWin();
+            endGame("SUCCÈS !", `+${win}€ Encaissés`, true);
+        } else {
+            soundLoss();
+            endGame("PERDU", "La case était vide.");
+        }
+        revealAll();
+    }
+
+    function endGame(title, msg, win=false) {
+        const zone = document.getElementById('res-zone');
+        const m = document.getElementById('res-msg');
+        zone.style.display = 'block';
+        m.innerHTML = `<b style="color:${win ? 'var(--win)' : 'var(--loss)'}">${title}</b><br><span style="font-size:0.6em">${msg}</span>`;
+        if(!win) document.getElementById('grid').classList.add('shake');
+        upd();
+    }
+
+    upd();
+</script>
+</body>
+</html>
