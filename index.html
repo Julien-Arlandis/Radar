@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Fast Pace Edition</title>
+    <title>RADAR 5/5 - Full Mobile Fix</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -16,34 +16,45 @@
         body {
             font-family: 'Arial Black', sans-serif;
             background-color: var(--bg); color: white;
-            height: 100vh; width: 100vw;
+            /* Utilisation du Dynamic Viewport Height pour mobile */
+            height: 100dvh; width: 100vw; 
             display: flex; flex-direction: column; align-items: center; overflow: hidden;
         }
 
         .container {
-            width: 100%; max-width: 500px; height: 100%;
+            width: 100%; max-width: 500px; 
+            flex: 1; /* Prend tout l'espace sauf le footer */
             background: var(--card); display: flex; flex-direction: row; position: relative;
             border-left: 1px solid #333; border-right: 1px solid #333;
+            min-height: 0; /* Important pour le scroll/flex */
         }
 
         .sidebar {
-            width: 90px; background: #000; border-right: 2px solid #333;
-            display: flex; flex-direction: column; padding: 10px 5px; gap: 10px;
+            width: 85px; background: #000; border-right: 2px solid #333;
+            display: flex; flex-direction: column; padding: 10px 5px; gap: 8px;
             font-size: 0.5em; text-align: center;
         }
 
-        .side-block { background: #111; padding: 8px 2px; border-radius: 6px; border: 1px solid #222; }
-        .side-label { color: #666; font-size: 0.8em; display: block; text-transform: uppercase; }
-        .side-val { font-weight: bold; color: var(--accent); font-size: 1.2em; display: block; }
+        .side-block { background: #111; padding: 6px 2px; border-radius: 6px; border: 1px solid #222; }
+        .side-label { color: #666; font-size: 0.75em; display: block; text-transform: uppercase; }
+        .side-val { font-weight: bold; color: var(--accent); font-size: 1.1em; display: block; }
         .val-solde { color: var(--win); border: 1px solid var(--win); background: #001a00; }
 
-        .game-zone { flex: 1; display: flex; flex-direction: column; padding: 10px; position: relative; justify-content: center; }
-        .grid-master { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+        .game-zone { 
+            flex: 1; display: flex; flex-direction: column; 
+            padding: 8px; position: relative; justify-content: flex-start;
+            min-height: 0;
+        }
+
+        .grid-master { 
+            display: grid; grid-template-columns: repeat(3, 1fr); 
+            gap: 6px; width: 100%; max-height: 65%;
+        }
         
         .sq {
             width: 100%; aspect-ratio: 1/1;
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
-            border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
             border: 2px solid #333; position: relative; overflow: hidden;
         }
 
@@ -52,15 +63,15 @@
         
         .sq.target-gold { 
             background: var(--gold-multi) !important; color: #000; 
-            font-weight: 900; font-size: 2.2em;
+            font-weight: 900; font-size: 1.8em;
         }
-        .sq.target-gold span { font-size: 0.4em; display: inline; margin-left: 1px; }
-        .sq.target-loss { background: #333 !important; border: none; color: #111; font-size: 2em; }
+        .sq.target-gold span { font-size: 0.4em; }
+        .sq.target-loss { background: #333 !important; border: none; color: #111; font-size: 1.5em; }
 
-        .sq-btns { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 4px; gap: 4px; }
+        .sq-btns { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 3px; gap: 3px; }
         .btn-tile {
-            border: none; border-radius: 8px; color: white;
-            font-size: 0.6em; font-weight: 900; cursor: pointer;
+            border: none; border-radius: 6px; color: white;
+            font-size: 0.55em; font-weight: 900; cursor: pointer;
             text-transform: uppercase; display: flex; align-items: center; justify-content: center;
         }
         .btn-tile-scratch { flex: 2; background: #333; border: 1px solid #444; }
@@ -69,17 +80,19 @@
 
         .terminal {
             background: #000; border-top: 2px solid #333;
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            height: 120px; padding: 15px; border-radius: 20px 20px 0 0;
+            margin-top: auto; /* Se colle en bas de la game-zone */
+            width: 100%; height: 100px; 
+            padding: 10px; border-radius: 15px 15px 0 0;
             display: flex; flex-direction: column; justify-content: center; z-index: 10;
         }
 
-        .btn-main { padding: 20px; border: none; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1.1em; background: var(--accent); color: black; }
+        .btn-main { padding: 15px; border: none; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1em; background: var(--accent); color: black; }
 
         .footer-info {
             width: 100%; max-width: 500px; height: 35px; background: #000;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.6em; color: #444; gap: 10px; border-top: 1px solid #222;
+            font-size: 0.55em; color: #444; gap: 8px; border-top: 1px solid #222;
+            flex-shrink: 0; /* Empêche le footer d'être écrasé */
         }
 
         .shake { animation: shake 0.4s; }
@@ -103,7 +116,7 @@
             <span class="side-label">BRÛLÉS</span>
         </div>
         <div style="margin-top:auto;">
-            <label style="font-size: 0.8em; color: #444; cursor:pointer;">
+            <label style="font-size: 0.7em; color: #444; cursor:pointer;">
                 <input type="checkbox" id="sound-on" checked> SON
             </label>
         </div>
@@ -117,7 +130,7 @@
                 <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
             </div>
             <div id="res-zone" style="display:none; text-align:center;">
-                <div id="res-msg" style="font-size: 1.2em;"></div>
+                <div id="res-msg" style="font-size: 1.1em;"></div>
             </div>
         </div>
     </div>
@@ -175,8 +188,8 @@
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
             s.innerHTML = `
                 <div class="sq-btns" id="btns-${i}">
-                    <button class="btn-tile btn-tile-scratch" onclick="scratch(${i})">GRATTER</button>
-                    <button class="btn-tile btn-tile-bet" onclick="placeBet(${i})">MISER</button>
+                    <button class="btn-tile btn-tile-scratch" onclick="scratch(${i})">GRAT</button>
+                    <button class="btn-tile btn-tile-bet" onclick="placeBet(${i})">MISE</button>
                 </div>
             `;
             g.appendChild(s);
@@ -193,7 +206,6 @@
                 fillTile(sq, i);
             }
         }
-        // DÉLAI RÉDUIT À 800ms
         setTimeout(() => {
             document.getElementById('res-zone').style.display = 'none';
             document.getElementById('buy-zone').style.display = 'block';
@@ -245,7 +257,7 @@
         if(ticket[idx] > 0) {
             const win = ticket[idx];
             solde += win; playSound(800, 'triangle', 0.3);
-            endGame(`SUCCÈS ! +${win}€`, true);
+            endGame(`+${win}€`, true);
         } else {
             playSound(100, 'sawtooth', 0.5);
             endGame("PERDU", false);
