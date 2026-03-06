@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Ultra Centered</title>
+    <title>RADAR 5/5 - Pure Buttons</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -45,7 +45,7 @@
             min-height: 0;
         }
 
-        /* CENTRAGE ABSOLU DE LA GRILLE */
+        /* CENTRAGE VERTICAL DE LA GRILLE */
         .grid-container {
             flex: 1;
             display: flex;
@@ -61,7 +61,7 @@
         
         .sq {
             width: 100%; 
-            aspect-ratio: 0.85 / 1;
+            aspect-ratio: 0.8 / 1; /* Encore un peu plus haut pour le confort mobile */
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;
             border: 2px solid #333; position: relative; overflow: hidden;
@@ -89,13 +89,13 @@
 
         .terminal {
             background: #000; border-top: 2px solid #333;
-            width: 100%; height: 110px; 
+            width: 100%; height: 100px; 
             padding: 15px; border-radius: 20px 20px 0 0;
-            display: flex; flex-direction: column; justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
 
-        .btn-main { padding: 18px; border: none; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1.1em; background: var(--accent); color: black; }
+        .btn-main { padding: 18px; border: none; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1em; background: var(--accent); color: black; }
 
         .footer-info {
             width: 100%; max-width: 500px; height: 35px; background: #000;
@@ -138,9 +138,7 @@
 
         <div class="terminal">
             <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
-            <div id="res-zone" style="display:none; text-align:center;">
-                <div id="res-msg" style="font-size: 1.2em; font-weight: bold;"></div>
-            </div>
+            <div id="res-msg" style="display:none; font-size: 1.2em; font-weight: bold; text-align: center;"></div>
         </div>
     </div>
 </div>
@@ -185,8 +183,8 @@
         if(audioCtx.state === 'suspended') audioCtx.resume();
         solde -= currentMise; playSound(600, 'sine', 0.05);
         isGameOver = false; goldsFound = 0; openedCases = 0;
-        document.getElementById('btn-buy').style.display='none';
-        document.getElementById('res-zone').style.display='none';
+        document.getElementById('btn-buy').style.display = 'none';
+        document.getElementById('res-msg').style.display = 'none';
         init(); upd();
     }
 
@@ -216,7 +214,7 @@
             }
         }
         setTimeout(() => {
-            document.getElementById('res-zone').style.display = 'none';
+            document.getElementById('res-msg').style.display = 'none';
             document.getElementById('btn-buy').style.display = 'block';
         }, 800);
     }
@@ -245,7 +243,7 @@
             goldsFound++;
             if (goldsFound >= 3) {
                 isGameOver = true; playSound(100, 'sawtooth', 0.5);
-                endGame("TICKET ÉPUISÉ", false);
+                endGame("ÉPUISÉ", false);
                 revealAll();
             } else {
                 playSound(400, 'sine', 0.1); upd();
@@ -275,9 +273,8 @@
     }
 
     function endGame(msg, win) {
-        const zone = document.getElementById('res-zone');
         const m = document.getElementById('res-msg');
-        zone.style.display = 'block';
+        m.style.display = 'block';
         m.innerHTML = `<b style="color:${win ? 'var(--win)' : 'var(--loss)'}">${msg}</b>`;
         if(!win) document.getElementById('grid').classList.add('shake');
         upd();
