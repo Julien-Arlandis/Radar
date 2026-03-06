@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Centered & Tall</title>
+    <title>RADAR 5/5 - Ultra Centered</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -42,19 +42,26 @@
         .game-zone { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 10px; position: relative; 
-            justify-content: center; /* CENTRE LA GRILLE VERTICALEMENT */
             min-height: 0;
+        }
+
+        /* CENTRAGE ABSOLU DE LA GRILLE */
+        .grid-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
         }
 
         .grid-master { 
             display: grid; grid-template-columns: repeat(3, 1fr); 
             gap: 10px; width: 100%;
-            margin-bottom: 20px; /* Espace avant le terminal */
         }
         
         .sq {
             width: 100%; 
-            aspect-ratio: 0.85 / 1; /* CASES PLUS HAUTES */
+            aspect-ratio: 0.85 / 1;
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;
             border: 2px solid #333; position: relative; overflow: hidden;
@@ -85,7 +92,7 @@
             width: 100%; height: 110px; 
             padding: 15px; border-radius: 20px 20px 0 0;
             display: flex; flex-direction: column; justify-content: center;
-            margin-top: auto;
+            flex-shrink: 0;
         }
 
         .btn-main { padding: 18px; border: none; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1.1em; background: var(--accent); color: black; }
@@ -125,12 +132,12 @@
     </div>
 
     <div class="game-zone">
-        <div id="grid" class="grid-master"></div>
+        <div class="grid-container">
+            <div id="grid" class="grid-master"></div>
+        </div>
 
         <div class="terminal">
-            <div id="buy-zone">
-                <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
-            </div>
+            <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
             <div id="res-zone" style="display:none; text-align:center;">
                 <div id="res-msg" style="font-size: 1.2em; font-weight: bold;"></div>
             </div>
@@ -178,7 +185,7 @@
         if(audioCtx.state === 'suspended') audioCtx.resume();
         solde -= currentMise; playSound(600, 'sine', 0.05);
         isGameOver = false; goldsFound = 0; openedCases = 0;
-        document.getElementById('buy-zone').style.display='none';
+        document.getElementById('btn-buy').style.display='none';
         document.getElementById('res-zone').style.display='none';
         init(); upd();
     }
@@ -190,8 +197,8 @@
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
             s.innerHTML = `
                 <div class="sq-btns" id="btns-${i}">
-                    <button class="btn-tile btn-tile-scratch" onclick="scratch(${i})">GRATTER</button>
-                    <button class="btn-tile btn-tile-bet" onclick="placeBet(${i})">MISER</button>
+                    <button class="btn-tile btn-tile-scratch" onclick="scratch(${i})">GRAT</button>
+                    <button class="btn-tile btn-tile-bet" onclick="placeBet(${i})">MISE</button>
                 </div>
             `;
             g.appendChild(s);
@@ -210,7 +217,7 @@
         }
         setTimeout(() => {
             document.getElementById('res-zone').style.display = 'none';
-            document.getElementById('buy-zone').style.display = 'block';
+            document.getElementById('btn-buy').style.display = 'block';
         }, 800);
     }
 
