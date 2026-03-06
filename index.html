@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Pure Buttons</title>
+    <title>RADAR 5/5 - Zero Div Edition</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -21,11 +21,9 @@
         }
 
         .container {
-            width: 100%; max-width: 500px; 
-            flex: 1;
+            width: 100%; max-width: 500px; flex: 1;
             background: var(--card); display: flex; flex-direction: row; position: relative;
-            border-left: 1px solid #333; border-right: 1px solid #333;
-            min-height: 0;
+            border-left: 1px solid #333; border-right: 1px solid #333; min-height: 0;
         }
 
         .sidebar {
@@ -39,29 +37,14 @@
         .side-val { font-weight: bold; color: var(--accent); font-size: 1.1em; display: block; }
         .val-solde { color: var(--win); border: 1px solid var(--win); background: #001a00; }
 
-        .game-zone { 
-            flex: 1; display: flex; flex-direction: column; 
-            padding: 10px; position: relative; 
-            min-height: 0;
-        }
+        .game-zone { flex: 1; display: flex; flex-direction: column; padding: 10px; min-height: 0; }
 
-        /* CENTRAGE VERTICAL DE LA GRILLE */
-        .grid-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
+        .grid-container { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
 
-        .grid-master { 
-            display: grid; grid-template-columns: repeat(3, 1fr); 
-            gap: 10px; width: 100%;
-        }
+        .grid-master { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
         
         .sq {
-            width: 100%; 
-            aspect-ratio: 0.8 / 1; /* Encore un peu plus haut pour le confort mobile */
+            width: 100%; aspect-ratio: 0.8 / 1;
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;
             border: 2px solid #333; position: relative; overflow: hidden;
@@ -70,10 +53,7 @@
         .sq.open { background: #fff !important; border: none; color: #000; }
         .sq.revealed { opacity: 0.3; }
         
-        .sq.target-gold { 
-            background: var(--gold-multi) !important; color: #000; 
-            font-weight: 900; font-size: 1.8em;
-        }
+        .sq.target-gold { background: var(--gold-multi) !important; color: #000; font-weight: 900; font-size: 1.8em; }
         .sq.target-gold span { font-size: 0.4em; }
         .sq.target-loss { background: #333 !important; border: none; color: #111; font-size: 1.5em; }
 
@@ -89,19 +69,21 @@
 
         .terminal {
             background: #000; border-top: 2px solid #333;
-            width: 100%; height: 100px; 
-            padding: 15px; border-radius: 20px 20px 0 0;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
+            width: 100%; height: 100px; padding: 15px; 
+            border-radius: 20px 20px 0 0;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
 
-        .btn-main { padding: 18px; border: none; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1em; background: var(--accent); color: black; }
+        .btn-main { 
+            padding: 18px; border: none; border-radius: 15px; font-weight: bold; 
+            width: 100%; cursor: pointer; text-transform: uppercase; 
+            font-size: 1em; background: var(--accent); color: black; 
+        }
 
         .footer-info {
             width: 100%; max-width: 500px; height: 35px; background: #000;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.55em; color: #444; gap: 8px; border-top: 1px solid #222;
-            flex-shrink: 0;
+            font-size: 0.55em; color: #444; gap: 8px; border-top: 1px solid #222; flex-shrink: 0;
         }
 
         .shake { animation: shake 0.4s; }
@@ -112,40 +94,21 @@
 
 <div class="container">
     <div class="sidebar">
-        <div class="side-block val-solde">
-            <span class="side-label">SOLDE</span>
-            <span class="side-val" id="bal">100.00</span>€
-        </div>
-        <div class="side-block">
-            <span class="side-label">TAXES</span>
-            <span class="side-val" id="global-tax" style="color:var(--loss)">0.00</span>€
-        </div>
-        <div class="side-block">
-            <span id="golds-found-ui" class="side-val">0/3</span>
-            <span class="side-label">BRÛLÉS</span>
-        </div>
-        <div style="margin-top:auto;">
-            <label style="font-size: 0.7em; color: #444; cursor:pointer;">
-                <input type="checkbox" id="sound-on" checked> SON
-            </label>
-        </div>
+        <div class="side-block val-solde"><span class="side-label">SOLDE</span><span class="side-val" id="bal">100.00</span>€</div>
+        <div class="side-block"><span class="side-label">TAXES</span><span class="side-val" id="global-tax" style="color:var(--loss)">0.00</span>€</div>
+        <div class="side-block"><span id="golds-found-ui" class="side-val">0/3</span><span class="side-label">BRÛLÉS</span></div>
+        <div style="margin-top:auto;"><label style="font-size: 0.7em; color: #444; cursor:pointer;"><input type="checkbox" id="sound-on" checked> SON</label></div>
     </div>
 
     <div class="game-zone">
-        <div class="grid-container">
-            <div id="grid" class="grid-master"></div>
-        </div>
-
-        <div class="terminal">
+        <div class="grid-container"><div id="grid" class="grid-master"></div></div>
+        <div id="terminal" class="terminal">
             <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
-            <div id="res-msg" style="display:none; font-size: 1.2em; font-weight: bold; text-align: center;"></div>
         </div>
     </div>
 </div>
 
-<div class="footer-info">
-    <span>GRATTAGE: 0.10€</span> | <span>LOTS: 20€, 20€, 50€</span>
-</div>
+<div class="footer-info"><span>GRATTAGE: 0.10€</span> | <span>LOTS: 20€, 20€, 50€</span></div>
 
 <script>
     let solde = 100, ticket = [], isGameOver = false;
@@ -170,10 +133,8 @@
         document.getElementById('bal').innerText = solde.toFixed(2);
         document.getElementById('global-tax').innerText = globalTaxes.toFixed(2);
         document.getElementById('golds-found-ui').innerText = `${goldsFound}/3`;
-        
         const remaining = 9 - openedCases;
-        const scratchBtns = document.querySelectorAll('.btn-tile-scratch');
-        scratchBtns.forEach(btn => {
+        document.querySelectorAll('.btn-tile-scratch').forEach(btn => {
             if (remaining <= 2) btn.style.display = 'none';
         });
     }
@@ -183,8 +144,8 @@
         if(audioCtx.state === 'suspended') audioCtx.resume();
         solde -= currentMise; playSound(600, 'sine', 0.05);
         isGameOver = false; goldsFound = 0; openedCases = 0;
-        document.getElementById('btn-buy').style.display = 'none';
-        document.getElementById('res-msg').style.display = 'none';
+        // On vide le terminal et on n'affiche rien pendant le jeu
+        document.getElementById('terminal').innerHTML = '';
         init(); upd();
     }
 
@@ -193,12 +154,7 @@
         ticket = [50, 20, 20, 0, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
         for(let i=0; i<9; i++) {
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
-            s.innerHTML = `
-                <div class="sq-btns" id="btns-${i}">
-                    <button class="btn-tile btn-tile-scratch" onclick="scratch(${i})">GRAT</button>
-                    <button class="btn-tile btn-tile-bet" onclick="placeBet(${i})">MISE</button>
-                </div>
-            `;
+            s.innerHTML = `<div class="sq-btns" id="btns-${i}"><button class="btn-tile btn-tile-scratch" onclick="scratch(${i})">GRAT</button><button class="btn-tile btn-tile-bet" onclick="placeBet(${i})">MISE</button></div>`;
             g.appendChild(s);
         }
     }
@@ -208,74 +164,45 @@
             const sq = document.getElementById(`sq-${i}`);
             const btns = document.getElementById(`btns-${i}`);
             if(btns) btns.style.display = 'none';
-            if(!sq.classList.contains('open')) {
-                sq.classList.add('open', 'revealed');
-                fillTile(sq, i);
-            }
+            if(!sq.classList.contains('open')) { sq.classList.add('open', 'revealed'); fillTile(sq, i); }
         }
         setTimeout(() => {
-            document.getElementById('res-msg').style.display = 'none';
-            document.getElementById('btn-buy').style.display = 'block';
+            // On réinjecte le bouton proprement sans div autour
+            document.getElementById('terminal').innerHTML = '<button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>';
         }, 800);
     }
 
     function fillTile(el, idx) {
-        if(ticket[idx] > 0) {
-            el.innerHTML = `${ticket[idx]}<span>€</span>`;
-            el.classList.add('target-gold');
-        } else {
-            el.innerText = 'X';
-            el.classList.add('target-loss');
-        }
+        if(ticket[idx] > 0) { el.innerHTML = `${ticket[idx]}<span>€</span>`; el.classList.add('target-gold'); }
+        else { el.innerText = 'X'; el.classList.add('target-loss'); }
     }
 
     function scratch(idx) {
         if(isGameOver || goldsFound >= 3) return;
-        if(solde < SCRATCH_FEE) return;
-        
         solde -= SCRATCH_FEE; globalTaxes += SCRATCH_FEE; openedCases++;
         document.getElementById(`btns-${idx}`).style.display = 'none';
         const sq = document.getElementById(`sq-${idx}`);
-        sq.classList.add('open');
-        fillTile(sq, idx);
-
+        sq.classList.add('open'); fillTile(sq, idx);
         if(ticket[idx] > 0) {
             goldsFound++;
-            if (goldsFound >= 3) {
-                isGameOver = true; playSound(100, 'sawtooth', 0.5);
-                endGame("ÉPUISÉ", false);
-                revealAll();
-            } else {
-                playSound(400, 'sine', 0.1); upd();
-            }
-        } else {
-            playSound(600, 'sine', 0.05); upd();
-        }
+            if (goldsFound >= 3) { isGameOver = true; playSound(100, 'sawtooth', 0.5); endGame("ÉPUISÉ", false); revealAll(); }
+            else { playSound(400, 'sine', 0.1); upd(); }
+        } else { playSound(600, 'sine', 0.05); upd(); }
     }
 
     function placeBet(idx) {
         if(isGameOver) return;
         isGameOver = true; openedCases++;
-        const sq = document.getElementById(`sq-${idx}`);
         document.getElementById(`btns-${idx}`).style.display = 'none';
-        sq.classList.add('open');
-        fillTile(sq, idx);
-
-        if(ticket[idx] > 0) {
-            const win = ticket[idx];
-            solde += win; playSound(800, 'triangle', 0.3);
-            endGame(`SUCCÈS ! +${win}€`, true);
-        } else {
-            playSound(100, 'sawtooth', 0.5);
-            endGame("PERDU", false);
-        }
+        const sq = document.getElementById(`sq-${idx}`);
+        sq.classList.add('open'); fillTile(sq, idx);
+        if(ticket[idx] > 0) { solde += ticket[idx]; playSound(800, 'triangle', 0.3); endGame(`+${ticket[idx]}€`, true); }
+        else { playSound(100, 'sawtooth', 0.5); endGame("PERDU", false); }
         revealAll();
     }
 
     function endGame(msg, win) {
-        const m = document.getElementById('res-msg');
-        m.style.display = 'block';
-        m.innerHTML = `<b style="color:${win ? 'var(--win)' : 'var(--loss)'}">${msg}</b>`;
+        document.getElementById('terminal').innerHTML = `<b style="color:${win ? 'var(--win)' : 'var(--loss)'}">${msg}</b>`;
         if(!win) document.getElementById('grid').classList.add('shake');
         upd();
     }
