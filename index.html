@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - 10€ Edition</title>
+    <title>RADAR 5/5 - High Volatility</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #f1c40f;
@@ -112,10 +111,10 @@
             <span class="side-label">TAXES</span>
             <span class="side-val" id="global-tax" style="color:var(--loss)">0.00</span>€
         </div>
-        <div class="section-title">GAINS</div>
+        <div class="section-title">CIBLES</div>
         <div class="side-block">
-            <span id="golds-found-ui" class="side-val" style="font-size: 1.6em;">0/4</span>
-            <span class="side-label">BRÛLÉS</span>
+            <span id="golds-found-ui" class="side-val" style="font-size: 1.6em;">0/3</span>
+            <span class="side-label">BRÛLÉES</span>
         </div>
         <label style="font-size: 0.7em; color: #444; margin-top: 10px; cursor:pointer;">
             <input type="checkbox" id="sound-on" checked> SON
@@ -131,7 +130,7 @@
             </div>
             <div id="res-zone" style="display:none; text-align:center;">
                 <div id="res-msg" style="font-size: 1.2em; margin-bottom:10px;"></div>
-                <div style="font-size: 0.7em; color: var(--accent); font-weight:bold;">Révélation des cases...</div>
+                <div style="font-size: 0.7em; color: var(--accent); font-weight:bold;">Fin du ticket...</div>
             </div>
         </div>
     </div>
@@ -140,9 +139,7 @@
 <div class="footer-info">
     <span>GRATTAGE: 0.10€</span>
     <span>|</span>
-    <span>MISE: GRATUITE</span>
-    <span>|</span>
-    <span>LOTS: 10€, 10€, 20€, 50€</span>
+    <span>LOTS: 20€, 20€, 50€</span>
 </div>
 
 <script>
@@ -179,7 +176,7 @@
     function upd() {
         document.getElementById('bal').innerText = solde.toFixed(2);
         document.getElementById('global-tax').innerText = globalTaxes.toFixed(2);
-        document.getElementById('golds-found-ui').innerText = `${goldsFound}/4`;
+        document.getElementById('golds-found-ui').innerText = `${goldsFound}/3`;
     }
 
     function buy() {
@@ -194,7 +191,7 @@
 
     function init() {
         const g = document.getElementById('grid'); g.innerHTML = '';
-        ticket = [50, 20, 10, 10, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
+        ticket = [50, 20, 20, 0, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
         for(let i=0; i<9; i++) {
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
             s.innerHTML = `
@@ -234,7 +231,7 @@
     }
 
     function scratch(idx) {
-        if(isGameOver || goldsFound >= 4) return;
+        if(isGameOver || goldsFound >= 3) return;
         const sq = document.getElementById(`sq-${idx}`);
         if(solde < SCRATCH_FEE) return notify("SOLDE BAS", "Plus de monnaie.");
         
@@ -245,9 +242,9 @@
 
         if(ticket[idx] > 0) {
             goldsFound++;
-            if (goldsFound >= 4) {
+            if (goldsFound >= 3) {
                 isGameOver = true; soundLoss();
-                endGame("TICKET ÉPUISÉ", "Toutes les valeurs ont été révélées.");
+                endGame("ÉPUISÉ", "Toutes les cibles ont été brûlées.");
                 revealAll();
             } else {
                 playSound(400, 'sine', 0.1); upd();
