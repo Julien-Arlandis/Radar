@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Paytable v1.7.6</title>
+    <title>RADAR 5/5 - Fair Play v1.7.8</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -142,7 +142,7 @@
 
         .footer { width: 100%; max-width: 500px; padding: 1vh 15px; display: flex; justify-content: space-between; align-items: center; background: #000; font-size: 0.6em; color: #444; border-top: 1px solid #222; flex-shrink: 0; }
         
-        .btn-rules { background: #333; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 1em; transition: background 0.2s; }
+        .btn-rules { background: #333; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 1em; }
         .btn-rules:hover { background: #555; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
@@ -167,7 +167,7 @@
         <div class="stat-val" style="color:var(--win)"><span id="bal">100.00</span>€</div>
     </div>
     <div class="stat-box">
-        <span class="stat-label">TAXES</span>
+        <span class="stat-label">TAXES BANQUE</span>
         <div class="stat-val" style="color:var(--loss)"><span id="global-tax">0.00</span>€</div>
     </div>
 </div>
@@ -185,28 +185,28 @@
 <div class="footer">
     <button class="btn-rules" onclick="toggleModal(true)">RÈGLES</button>
     <label style="cursor:pointer;"><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>VER: 1.7.6</span>
+    <span>VER: 1.7.8</span>
 </div>
 
 <div id="rulesModal" class="modal">
     <div class="modal-content">
         <h2>RÈGLES DU JEU</h2>
-        <p>1. <b>Grattez</b> les cases pour trouver les <b>BOMBES</b> (coût 0.10€/case). Cela réduit le nombre de cases inconnues.</p>
-        <p>2. <b>Évitez</b> de gratter les <b>GAINS</b>. Si vous découvrez les 3 gains cachés, le ticket est épuisé.</p>
-        <p>3. <b>Misez</b> via le bouton <b>€</b> sur une case encore masquée pour empocher son contenu.</p>
+        <p>1. <b>Achat</b> : Le ticket coûte 10.00€.</p>
+        <p>2. <b>Nettoyage</b> : Gratter une case pour trouver une bombe coûte 0.10€.</p>
+        <p>3. <b>Mise</b> : Utiliser le bouton <b>€</b> pour révéler et encaisser une case coûte aussi <b>0.10€</b>.</p>
 
         <table class="paytable">
             <thead>
-                <tr><th>LOTS CACHÉS</th><th>VALEUR</th></tr>
+                <tr><th>RÉPARTITION</th><th>VALEUR</th></tr>
             </thead>
             <tbody>
                 <tr><td>1 x Super Gain</td><td class="val">50.00€</td></tr>
-                <tr><td>2 x Gain Classique</td><td class="val">20.00€</td></tr>
-                <tr><td>6 x Bombes</td><td>-</td></tr>
+                <tr><td>2 x Gains Moyens</td><td class="val">20.00€</td></tr>
+                <tr><td>6 x Bombes</td><td>0.00€</td></tr>
             </tbody>
         </table>
 
-        <button class="btn-close" onclick="toggleModal(false)">FERMER</button>
+        <button class="btn-close" onclick="toggleModal(false)">OK</button>
     </div>
 </div>
 
@@ -287,9 +287,17 @@
     }
 
     function placeBet(idx) {
-        if(isGameOver) return; isGameOver = true;
-        const val = ticket[idx]; solde += val;
+        if(isGameOver) return;
+        if(solde < 0.10) return alert("Solde insuffisant !");
+        
+        isGameOver = true;
+        solde -= 0.10; // La mise coûte 10 cts comme le grattage
+        globalTaxes += 0.10;
+        
+        const val = ticket[idx]; 
+        solde += val;
         const sq = document.getElementById(`sq-${idx}`);
+        // La case reste déchirée car c'est un grattage (v1.7.3)
         sq.classList.add('open', val > 0 ? 'final-win' : 'final-loss');
         sq.classList.remove('token-hover');
         if(val > 0) playSnd(880, 'triangle', 0.5, 0.1); else playSnd(80, 'square', 0.6, 0.1);
