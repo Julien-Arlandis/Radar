@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Fair Play v1.7.24</title>
+    <title>RADAR 5/5 - Fair Play v1.7.26</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -68,19 +68,16 @@
             cursor: pointer;
         }
 
-        /* --- ROLLOVER RÉTABLI --- */
-        /* Fond gris s'éclaire sur toutes les cases non ouvertes au survol */
+        /* --- ROLLOVER FOND --- */
         .sq:not(.open):hover {
             border-color: #666; background: #999;
         }
 
-        /* ANNULATION DU ROLLOVER FOND SI ON SURVOLE PRÉCISÉMENT UN JETON */
         .sq:not(.open):has(.btn-bet-token:hover):hover,
         .sq:not(.open):has(.btn-final-token:hover):hover {
             background: #888 !important; border-color: #444 !important;
         }
 
-        /* Cas spécifique des cases de fin qui ne doivent pas changer de fond */
         .sq.has-final:hover {
             background: #888 !important; border-color: #444 !important;
             cursor: default;
@@ -118,8 +115,12 @@
 
         .gain-text { font-size: clamp(0.7em, 3.5vh, 1.4em); font-weight: 900; }
 
-        /* JETONS */
+        /* JETONS HARMONISÉS */
         .btn-bet-token, .btn-final-token {
+            background: var(--win); color: white; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; border: 2px solid #fff;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.6); 
             transition: transform 0.2s, box-shadow 0.2s;
             cursor: pointer; z-index: 100;
         }
@@ -127,21 +128,15 @@
         .btn-bet-token { 
             position: absolute; bottom: 4%; left: 4%; 
             width: clamp(30px, 6vh, 45px); height: clamp(30px, 6vh, 45px);
-            background: var(--win); color: white; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center;
-            font-size: clamp(0.7em, 1.8vh, 1em); font-weight: 900;
-            border: 2px solid #fff;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.6); text-transform: uppercase;
+            font-size: clamp(0.7em, 1.8vh, 1.1em);
         }
 
         .btn-bet-token:hover { transform: scale(1.15); box-shadow: 0 0 15px var(--win); }
 
         .btn-final-token {
             width: clamp(75px, 15vh, 110px); height: clamp(75px, 15vh, 110px);
-            background: var(--win); color: white; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2em; font-weight: 900;
-            border: 4px solid #fff; box-shadow: 0 0 20px rgba(39, 174, 96, 0.6);
+            font-size: 3em; /* Symbole € géant */
+            border-width: 4px;
             animation: pulse 1.5s infinite;
         }
 
@@ -217,7 +212,7 @@
 <div class="footer">
     <button class="btn-rules" onclick="toggleModal(true)">RÈGLES</button>
     <label style="cursor:pointer;"><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>VER: 1.7.24</span>
+    <span>VER: 1.7.26</span>
 </div>
 
 <div id="gameOverModal" class="modal-go">
@@ -373,7 +368,7 @@
                     if(!document.getElementById(`final-token-${i}`)) {
                         const ft = document.createElement('div');
                         ft.id = `final-token-${i}`; ft.className = 'btn-final-token';
-                        ft.innerText = 'MISE'; 
+                        ft.innerText = '€'; // Changement ici : "€" au lieu de "MISE"
                         ft.onclick = (e) => { e.stopPropagation(); placeBet(i); };
                         ft.ontouchend = (e) => { e.stopPropagation(); placeBet(i); };
                         sq.appendChild(ft);
