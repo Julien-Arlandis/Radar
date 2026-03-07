@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Button Glow v1.7.4</title>
+    <title>RADAR 5/5 - Paytable v1.7.6</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -63,8 +63,7 @@
         }
 
         .sq:not(.open):not(.has-final):not(.token-hover):hover {
-            border-color: #666;
-            background: #999;
+            border-color: #666; background: #999;
         }
         
         .sq.has-final { cursor: default; }
@@ -102,8 +101,7 @@
 
         .btn-bet-token { 
             position: absolute; bottom: 4%; left: 4%; 
-            width: clamp(30px, 6vh, 45px);
-            height: clamp(30px, 6vh, 45px);
+            width: clamp(30px, 6vh, 45px); height: clamp(30px, 6vh, 45px);
             background: var(--win); color: white; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center;
             font-size: clamp(0.7em, 1.8vh, 1em); font-weight: 900;
@@ -130,7 +128,6 @@
 
         .terminal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; padding: 5px; }
         
-        /* ROLLOVER BOUTON ACHAT */
         .btn-main { 
             height: 70%; max-height: 60px; width: 90%; max-width: 400px; 
             border: none; border-radius: 12px; font-weight: bold; 
@@ -138,20 +135,28 @@
             transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 0 #b38f00;
         }
-        .btn-main:hover {
-            background: #ffe066;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4), 0 6px 0 #b38f00;
-        }
-        .btn-main:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #b38f00;
-        }
+        .btn-main:hover { background: #ffe066; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4), 0 6px 0 #b38f00; }
 
         .res-big { font-size: 1.8em; font-weight: 900; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         .footer { width: 100%; max-width: 500px; padding: 1vh 15px; display: flex; justify-content: space-between; align-items: center; background: #000; font-size: 0.6em; color: #444; border-top: 1px solid #222; flex-shrink: 0; }
+        
+        .btn-rules { background: #333; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 1em; transition: background 0.2s; }
+        .btn-rules:hover { background: #555; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 15px; border: 2px solid var(--accent); width: 90%; max-width: 360px; text-align: left; }
+        .modal-content h2 { color: var(--accent); margin-bottom: 15px; font-size: 1.2em; text-align: center; }
+        .modal-content p { font-size: 0.8em; line-height: 1.4; margin-bottom: 10px; color: #ccc; }
+        .modal-content b { color: #fff; }
+
+        .paytable { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.8em; background: #111; border-radius: 8px; overflow: hidden; }
+        .paytable th, .paytable td { padding: 8px; border: 1px solid #222; text-align: center; }
+        .paytable th { background: #222; color: var(--accent); font-weight: bold; }
+        .paytable td.val { color: var(--win); font-weight: bold; }
+
+        .btn-close { display: block; width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 1em; }
     </style>
 </head>
 <body>
@@ -178,14 +183,38 @@
 </div>
 
 <div class="footer">
-    <span>VER: 1.7.4</span>
+    <button class="btn-rules" onclick="toggleModal(true)">RÈGLES</button>
     <label style="cursor:pointer;"><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>RADAR SYSTEM</span>
+    <span>VER: 1.7.6</span>
+</div>
+
+<div id="rulesModal" class="modal">
+    <div class="modal-content">
+        <h2>RÈGLES DU JEU</h2>
+        <p>1. <b>Grattez</b> les cases pour trouver les <b>BOMBES</b> (coût 0.10€/case). Cela réduit le nombre de cases inconnues.</p>
+        <p>2. <b>Évitez</b> de gratter les <b>GAINS</b>. Si vous découvrez les 3 gains cachés, le ticket est épuisé.</p>
+        <p>3. <b>Misez</b> via le bouton <b>€</b> sur une case encore masquée pour empocher son contenu.</p>
+
+        <table class="paytable">
+            <thead>
+                <tr><th>LOTS CACHÉS</th><th>VALEUR</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>1 x Super Gain</td><td class="val">50.00€</td></tr>
+                <tr><td>2 x Gain Classique</td><td class="val">20.00€</td></tr>
+                <tr><td>6 x Bombes</td><td>-</td></tr>
+            </tbody>
+        </table>
+
+        <button class="btn-close" onclick="toggleModal(false)">FERMER</button>
+    </div>
 </div>
 
 <script>
     let solde = 100, ticket = [], isGameOver = false, globalTaxes = 0, goldsFound = 0, openedCases = 0;
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function toggleModal(show) { document.getElementById('rulesModal').style.display = show ? 'flex' : 'none'; }
 
     function playScratchSnd() {
         if (!document.getElementById('sound-on').checked) return;
@@ -261,7 +290,6 @@
         if(isGameOver) return; isGameOver = true;
         const val = ticket[idx]; solde += val;
         const sq = document.getElementById(`sq-${idx}`);
-        // La case misée reste déchirée (v1.7.3)
         sq.classList.add('open', val > 0 ? 'final-win' : 'final-loss');
         sq.classList.remove('token-hover');
         if(val > 0) playSnd(880, 'triangle', 0.5, 0.1); else playSnd(80, 'square', 0.6, 0.1);
