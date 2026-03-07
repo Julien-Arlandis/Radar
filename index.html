@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Fair Play v1.7.22</title>
+    <title>RADAR 5/5 - Fair Play v1.7.23</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -12,7 +12,12 @@
             --coin-bg: #ffcc00;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            margin: 0; padding: 0; 
+            touch-action: manipulation; /* Désactive le double-tap zoom pour plus de réactivité */
+        }
 
         body {
             font-family: 'Arial Black', sans-serif;
@@ -20,6 +25,7 @@
             height: 100dvh; width: 100vw; 
             display: flex; flex-direction: column; align-items: center;
             overflow: hidden; 
+            user-select: none; -webkit-user-select: none;
         }
 
         .header {
@@ -61,30 +67,18 @@
             transition: border-color 0.2s, background 0.2s;
         }
 
-        /* --- LOGIQUE DE ROLLOVER FILTRÉE --- */
-        
-        /* 1. Rollover par défaut sur les cases grises */
-        .sq:not(.open):hover {
+        /* ROLLOVER FOND GRIS : Uniquement si pas de jeton */
+        .sq:not(.open):not(.has-final):not(:has(.btn-bet-token)):hover {
             border-color: #666; background: #999;
-            cursor: pointer;
         }
 
-        /* 2. ANNULATION DU ROLLOVER DU FOND SI UN JETON EST SURVOLÉ */
-        /* Si l'utilisateur survole l'enfant (jeton), on force le parent à garder son état normal */
+        /* Empêche le fond de réagir quand on survole/touche les jetons */
         .sq:not(.open):has(.btn-bet-token:hover):hover,
         .sq:not(.open):has(.btn-final-token:hover):hover {
-            background: #888 !important;
-            border-color: #444 !important;
-            cursor: default;
+            background: #888 !important; border-color: #444 !important;
         }
 
-        /* 3. CAS SPÉCIFIQUE DES MISES FINALES (Jamais de rollover fond) */
-        .sq.has-final:hover {
-            background: #888 !important;
-            border-color: #444 !important;
-        }
-
-        /* ---------------------------------- */
+        .sq.has-final { cursor: default; }
 
         .reveal-content {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -92,6 +86,7 @@
             background: var(--scratch-grey); opacity: 0; z-index: 5;
             -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0.7) 100%);
             mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none; /* Crucial pour laisser passer le clic vers la case ou le bouton */
         }
 
         .sq.open .reveal-content { opacity: 1; }
@@ -117,10 +112,11 @@
 
         .gain-text { font-size: clamp(0.7em, 3.5vh, 1.4em); font-weight: 900; }
 
-        /* ROLLOVER JETONS */
+        /* JETONS ET MISES */
         .btn-bet-token, .btn-final-token {
             transition: transform 0.2s, box-shadow 0.2s;
             cursor: pointer; z-index: 100;
+            pointer-events: auto;
         }
 
         .btn-bet-token { 
@@ -163,6 +159,7 @@
         }
         .btn-main:hover { background: #ffe066; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4), 0 6px 0 #b38f00; }
 
+        /* MODALE FIN DE CRÉDIT */
         .modal-go {
             display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.15); align-items: center; justify-content: center;
@@ -216,7 +213,7 @@
 <div class="footer">
     <button class="btn-rules" onclick="toggleModal(true)">RÈGLES</button>
     <label style="cursor:pointer;"><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>VER: 1.7.22</span>
+    <span>VER: 1.7.23</span>
 </div>
 
 <div id="gameOverModal" class="modal-go">
@@ -289,16 +286,19 @@
         ticket = [50, 20, 20, 0, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
         for(let i=0; i<9; i++) {
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
+            // Utilisation de onclick pour mobile (plus stable qu'un listener multiple si bien géré)
             s.onclick = (e) => { 
-                // On vérifie si l'utilisateur a cliqué sur le bouton de mise
-                if(e.target.classList.contains('btn-bet-token') || e.target.classList.contains('btn-final-token')) return;
-                handleScratch(i); 
+                if(!e.target.classList.contains('btn-bet-token') && !e.target.classList.contains('btn-final-token')) {
+                    handleScratch(i); 
+                }
             };
             const content = ticket[i] > 0 
                 ? `<div class="win-coin"><span class="gain-text">${ticket[i]}€</span></div>`
                 : `<div class="loss-icon"></div>`;
             s.innerHTML = `<div class="reveal-content" id="reveal-${i}" style="clip-path: ${generateUltraJaggedPath()}">${content}</div>
-                           <div class="btn-bet-token" id="bet-token-${i}" onclick="event.stopPropagation(); placeBet(${i})">€</div>`;
+                           <div class="btn-bet-token" id="bet-token-${i}" 
+                                onclick="event.stopPropagation(); placeBet(${i})"
+                                ontouchend="event.stopPropagation(); placeBet(${i})">€</div>`;
             g.appendChild(s);
         }
     }
@@ -371,7 +371,10 @@
                     if(!document.getElementById(`final-token-${i}`)) {
                         const ft = document.createElement('div');
                         ft.id = `final-token-${i}`; ft.className = 'btn-final-token';
-                        ft.innerText = 'MISE'; ft.onclick = (e) => { e.stopPropagation(); placeBet(i); };
+                        ft.innerText = 'MISE'; 
+                        // Double event pour assurer la compatibilité maximale
+                        ft.onclick = (e) => { e.stopPropagation(); placeBet(i); };
+                        ft.ontouchend = (e) => { e.stopPropagation(); placeBet(i); };
                         sq.appendChild(ft);
                     }
                 }
