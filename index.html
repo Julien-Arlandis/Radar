@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Fair Play v1.7.19</title>
+    <title>RADAR 5/5 - Fair Play v1.7.22</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -58,22 +58,33 @@
             background: #888; border-radius: 10px; 
             display: flex; align-items: center; justify-content: center;
             border: 2px solid #444; position: relative; overflow: hidden;
-            cursor: pointer;
             transition: border-color 0.2s, background 0.2s;
         }
 
-        /* ROLLOVER FOND GRIS : S'active sur la case, mais on l'annule si on survole un enfant (le jeton) */
+        /* --- LOGIQUE DE ROLLOVER FILTRÉE --- */
+        
+        /* 1. Rollover par défaut sur les cases grises */
         .sq:not(.open):hover {
             border-color: #666; background: #999;
-        }
-        
-        /* TECHNIQUE POUR ANNULER LE ROLLOVER DU FOND QUAND LE JETON EST SURVOLÉ */
-        .sq:not(.open):has(.btn-bet-token:hover):hover,
-        .sq:not(.open):has(.btn-final-token:hover):hover {
-            border-color: #444; background: #888;
+            cursor: pointer;
         }
 
-        .sq.has-final { cursor: default; }
+        /* 2. ANNULATION DU ROLLOVER DU FOND SI UN JETON EST SURVOLÉ */
+        /* Si l'utilisateur survole l'enfant (jeton), on force le parent à garder son état normal */
+        .sq:not(.open):has(.btn-bet-token:hover):hover,
+        .sq:not(.open):has(.btn-final-token:hover):hover {
+            background: #888 !important;
+            border-color: #444 !important;
+            cursor: default;
+        }
+
+        /* 3. CAS SPÉCIFIQUE DES MISES FINALES (Jamais de rollover fond) */
+        .sq.has-final:hover {
+            background: #888 !important;
+            border-color: #444 !important;
+        }
+
+        /* ---------------------------------- */
 
         .reveal-content {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -152,9 +163,6 @@
         }
         .btn-main:hover { background: #ffe066; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4), 0 6px 0 #b38f00; }
 
-        .res-big { font-size: 1.8em; font-weight: 900; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-
         .modal-go {
             display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.15); align-items: center; justify-content: center;
@@ -208,7 +216,7 @@
 <div class="footer">
     <button class="btn-rules" onclick="toggleModal(true)">RÈGLES</button>
     <label style="cursor:pointer;"><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>VER: 1.7.19</span>
+    <span>VER: 1.7.22</span>
 </div>
 
 <div id="gameOverModal" class="modal-go">
@@ -281,7 +289,11 @@
         ticket = [50, 20, 20, 0, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
         for(let i=0; i<9; i++) {
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
-            s.onclick = (e) => { handleScratch(i); };
+            s.onclick = (e) => { 
+                // On vérifie si l'utilisateur a cliqué sur le bouton de mise
+                if(e.target.classList.contains('btn-bet-token') || e.target.classList.contains('btn-final-token')) return;
+                handleScratch(i); 
+            };
             const content = ticket[i] > 0 
                 ? `<div class="win-coin"><span class="gain-text">${ticket[i]}€</span></div>`
                 : `<div class="loss-icon"></div>`;
