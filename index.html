@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - v2.0.9 - Fix Loss Border</title>
+    <title>RADAR 5/5 - v2.5.7 - Full Restoration</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -19,133 +19,207 @@
             background-color: var(--bg); color: white;
             height: 100dvh; width: 100vw; 
             display: flex; flex-direction: column; align-items: center;
-            overflow: hidden; user-select: none; -webkit-user-select: none;
+            overflow: hidden; user-select: none;
         }
 
         .header {
-            width: 100%; max-width: 500px; padding: 2vh 10px;
+            width: 100%; max-width: 500px; padding: 15px 10px;
             display: flex; justify-content: space-around; align-items: center;
             background: #000; border-bottom: 2px solid #222; flex-shrink: 0;
-            z-index: 10;
         }
 
-        .stat-val { font-size: 1.3em; font-weight: bold; }
+        .stat-val { font-size: 1.2em; font-weight: bold; }
         .stat-label { color: #666; font-size: 0.6em; display: block; text-transform: uppercase; }
 
         .container {
             width: 100%; max-width: 500px; flex: 1;
             background: var(--card); display: flex; flex-direction: column;
-            border-left: 1px solid #333; border-right: 1px solid #333; min-height: 0;
-            position: relative;
+            border-left: 1px solid #333; border-right: 1px solid #333; position: relative;
         }
 
         .game-zone { flex: 3; display: flex; flex-direction: column; padding: 10px; min-height: 0; }
 
         .grid-master { 
             display: grid; grid-template-columns: repeat(3, 1fr); 
-            grid-template-rows: repeat(3, 1fr); gap: 8px; width: 100%; height: 100%; margin: auto;
+            grid-template-rows: repeat(3, 1fr); gap: 8px; width: 100%; height: 100%;
         }
         
         .sq {
             width: 100%; height: 100%; background: #222; border-radius: 10px; 
-            display: flex; align-items: center; justify-content: center;
-            border: 2px solid #444; position: relative; overflow: hidden;
-            transition: border 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden; border: 2px solid #444;
         }
 
-        /* --- DUAL ZONE (BARYCENTRE) --- */
-        .dual-container { position: absolute; width: 100%; height: 100%; z-index: 20; }
-        .zone-scratch { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--scratch-grey); clip-path: polygon(0 0, 100% 0, 0 100%); transition: background 0.2s; cursor: pointer; }
-        .zone-scratch:hover { background: #999; }
-        .zone-scratch .icon { position: absolute; top: 33.33%; left: 33.33%; transform: translate(-50%, -50%); font-size: clamp(1.1em, 3.2vh, 1.5em); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+        .perm-bg { position: absolute; width: 100%; height: 100%; z-index: 1; }
+        .p-grey { position: absolute; width:100%; height:100%; background: var(--scratch-grey); clip-path: polygon(0 0, 100% 0, 0 100%); }
+        .p-green { position: absolute; width:100%; height:100%; background: var(--win); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+        .perm-bg .ic-f { position: absolute; transform: translate(-50%, -50%); opacity: 0.15; color: white; pointer-events: none; }
+
+        .reveal-layer { position: absolute; width: 100%; height: 100%; z-index: 5; opacity: 0; transition: opacity 0.3s; }
+        .sq.open .reveal-layer { opacity: 1; }
+
+        .torn-wrapper { position: absolute; width: 100%; height: 100%; z-index: 6; }
+        .torn-hole { position: absolute; width: 100%; height: 100%; background: #111; }
         
-        .zone-bet { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--win); clip-path: polygon(100% 0, 100% 100%, 0 100%); transition: background 0.2s; cursor: pointer; }
-        .zone-bet:hover { background: #2ecc71; }
-        .zone-bet .icon { position: absolute; top: 66.66%; left: 66.66%; transform: translate(-50%, -50%); font-size: clamp(1.3em, 3.8vh, 1.8em); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+        .svg-depth-mask { position: absolute; width: 0; height: 0; visibility: hidden; }
 
-        .sq.open .dual-container { display: none; }
+        .is-torn { 
+            filter: url(#massiveInnerShadow);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
 
-        /* --- MISE FINALE FULL FOND --- */
-        .final-bet-container { position: absolute; top:0; left:0; width: 100%; height: 100%; background: var(--win); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 30; transition: background 0.2s, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .final-bet-container .icon { font-size: 5em; pointer-events: none; transition: transform 0.2s; }
-        .final-bet-container:hover { background: #2ecc71; transform: scale(1.05); }
-        .final-bet-container:hover .icon { transform: scale(1.1); }
+        .reveal-all .torn-wrapper { clip-path: none !important; }
+        .reveal-all .torn-hole { background: #111 !important; filter: none !important; border: none !important; }
 
-        /* --- BORDURES FIN (FIXED) --- */
-        .sq.final-win { border: 5px solid var(--win) !important; box-shadow: 0 0 20px var(--win); z-index: 50; }
-        .sq.final-loss { border: 5px solid var(--loss) !important; box-shadow: 0 0 20px var(--loss); z-index: 50; }
+        .coin-wrap { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 7; }
 
-        /* --- DESIGN PREMIUM --- */
-        .reveal-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; opacity: 0; z-index: 5; }
-        .sq.open .reveal-content { opacity: 1; }
-        .win-coin { width: 75%; height: 75%; max-width: 70px; max-height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: var(--coin-bg); box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 0 15px rgba(255, 204, 0, 0.4); border: 3px solid #e6b800; color: #000; }
-        .loss-coin { width: 75%; height: 75%; max-width: 70px; max-height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: #333; border: 3px solid #444; color: #666; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        /* ROLLOVER ET BOUTONS */
+        .dual-btns { position: absolute; width: 100%; height: 100%; z-index: 100; }
+        .z-s, .z-b { position: absolute; width: 100%; height: 100%; cursor: pointer; transition: 0.2s; }
+        .z-s { background: var(--scratch-grey); clip-path: polygon(0 0, 100% 0, 0 100%); }
+        .z-b { background: var(--win); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+        
+        .z-s:hover { background: #999; }
+        .z-b:hover { background: #2ecc71; }
+        .z-s:active, .z-b:active { filter: brightness(0.8); }
+
+        .ic { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        .ic-l { margin-top: -16.66%; margin-left: -16.66%; font-size: 1.4em; }
+        .ic-t { margin-top: 16.66%; margin-left: 16.66%; font-size: 1.7em; }
+
+        .sq.open .dual-btns { display: none; }
+
+        /* MISE FINALE - CORRECTIF Y MASSIF */
+        .final-bet-overlay { 
+            position: absolute; top:0; left:0; width: 100%; height: 100%; 
+            background: var(--win); z-index: 110; cursor: pointer; 
+            transition: 0.2s;
+        }
+        .final-bet-overlay:hover { background: #2ecc71; }
+        .final-bet-overlay span { 
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-55%, -65%); /* Correction -15% Y */
+            font-size: 5.5em; line-height: 0; display: block; pointer-events: none;
+        }
+
+        .win-coin { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: var(--coin-bg); border: 3px solid #e6b800; color: #000; box-shadow: 0 0 15px rgba(255,204,0,0.3); }
+        .loss-coin { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: #333; border: 3px solid #444; color: #666; }
+
+        .sq.final-win { border: 5px solid var(--win) !important; box-shadow: 0 0 25px var(--win) !important; z-index: 200; }
+        .sq.final-loss { border: 5px solid var(--loss) !important; box-shadow: 0 0 25px var(--loss) !important; z-index: 200; }
 
         .terminal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; min-height: 120px; }
-        .btn-main { height: 60px; width: 90%; max-width: 400px; border-radius: 12px; font-weight: bold; cursor: pointer; background: var(--accent); color: black; font-size: 1.1em; box-shadow: 0 5px 0 #b38f00; border:none; transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.1s ease; position: relative; top: 0; }
+        .btn-main { height: 55px; width: 90%; max-width: 400px; border-radius: 12px; font-weight: bold; cursor: pointer; background: var(--accent); color: black; border:none; box-shadow: 0 5px 0 #b38f00; transition: 0.1s; position: relative; }
         .btn-main:hover { background: #ffe066; transform: translateY(-2px); box-shadow: 0 7px 0 #b38f00; }
-        .btn-main:active { transform: translateY(3px); box-shadow: 0 2px 0 #b38f00; }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.1); align-items: center; justify-content: center; }
-        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; border: 3px solid var(--accent); width: 85%; max-width: 380px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
-        .paytable { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.8em; background: #111; }
-        .paytable th, .paytable td { padding: 10px; border: 1px solid #333; text-align: center; }
-        .paytable th { background: #222; color: var(--accent); }
+        .ev-box { font-size: 0.85em; color: var(--accent); margin-bottom: 10px; background: rgba(255,204,0,0.1); padding: 6px 18px; border-radius: 20px; border: 1px solid rgba(255,204,0,0.3); display: none; }
 
-        .footer { width: 100%; max-width: 500px; padding: 1vh 15px; display: flex; justify-content: space-around; align-items: center; background: #000; font-size: 0.6em; color: #444; border-top: 1px solid #222; }
+        .footer { width: 100%; max-width: 500px; padding: 10px; display: flex; justify-content: space-around; align-items: center; background: #000; font-size: 0.7em; color: #444; border-top: 1px solid #222; }
+        
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; border: 3px solid var(--accent); width: 85%; max-width: 400px; text-align: left; line-height: 1.4; }
+        .paytable { width: 100%; border-collapse: collapse; margin: 15px 0; background: #111; }
+        .paytable td { padding: 10px; border: 1px solid #333; color: white; text-align: center; }
     </style>
 </head>
 <body>
 
+<svg class="svg-depth-mask" width="0" height="0">
+  <defs>
+    <filter id="massiveInnerShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feComponentTransfer in=SourceAlpha><feFuncA type="linear" slope="-1" intercept="1"/></feComponentTransfer>
+      <feGaussianBlur stdDeviation="20"/><feOffset dx="0" dy="0"/><feComposite operator="arithmetic" k2="-1" k3="1" in2="SourceAlpha"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.95 0"/><feComposite operator="in" in2="SourceAlpha"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+</svg>
+
 <div class="header">
-    <div class="stat-box"><span class="stat-label">SOLDE</span><div id="bal" class="stat-val" style="color:var(--win)">100.00</div></div>
-    <div class="stat-box"><span class="stat-label">TAXES BANQUE</span><div id="global-tax" class="stat-val" style="color:var(--loss)">0.00</div></div>
+    <div class="stat-box"><span class="stat-label">SOLDE</span><div id="bal" style="color:var(--win)">100.00</div></div>
+    <div class="stat-box"><span class="stat-label">TAXES BANQUE</span><div id="tax" style="color:var(--loss)">0.00</div></div>
 </div>
 
 <div class="container">
     <div class="game-zone"><div class="grid-master" id="grid"></div></div>
     <div id="terminal" class="terminal">
-        <div id="ev-display" style="font-size: 0.85em; color: var(--accent); margin-bottom: 10px; background: rgba(255, 204, 0, 0.1); padding: 5px 15px; border-radius: 20px; display: none; border: 1px solid rgba(255, 204, 0, 0.3);">ESPÉRANCE DE GAIN : 0.00€</div>
+        <div id="ev-display" class="ev-box">ESPÉRANCE : 0.00€</div>
         <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
-        <div id="res-zone"></div>
+        <div id="res-zone" style="font-weight:900; font-size:1.5em; margin-top:5px;"></div>
     </div>
 </div>
 
 <div class="footer">
-    <button style="background: #333; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 1.2em;" onclick="toggleModal(true)">RÈGLES</button>
+    <button style="background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;" onclick="toggleModal('rulesModal', true)">RÈGLES</button>
     <label><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>v2.0.9</span>
+    <span>v2.5.7</span>
 </div>
 
 <div id="rulesModal" class="modal">
     <div class="modal-content">
-        <h2 style="color:var(--accent)">RÈGLES DU JEU</h2>
-        <p>• <b>🔍 Zone Grise</b> : Gratter (0.10€)</p>
-        <p>• <b>🎯 Zone Verte</b> : Miser (0.10€)</p>
+        <h2 style="color:var(--accent); text-align:center; margin-bottom:10px;">COMMENT JOUER</h2>
+        <p>• 🔍 <b>Zone Grise</b> : Gratter (0.10€). Révèle le contenu.</p>
+        <p>• 🎯 <b>Zone Verte</b> : Miser (0.10€). Tente de gagner le contenu.</p>
         <table class="paytable">
-            <thead><tr><th>QTÉ</th><th>GAIN</th></tr></thead>
-            <tbody><tr><td>1</td><td style="color:var(--accent)">50.00€</td></tr><tr><td>2</td><td style="color:var(--accent)">20.00€</td></tr><tr><td>6</td><td>0.00€</td></tr></tbody>
+            <tr><td colspan="2" style="background:#222; font-weight:bold; color:var(--accent)">TABLEAU DES GAINS</td></tr>
+            <tr><td>1x</td><td style="font-weight:bold;">50.00 €</td></tr>
+            <tr><td>2x</td><td style="font-weight:bold;">20.00 €</td></tr>
+            <tr><td>6x</td><td>0.00 €</td></tr>
         </table>
-        <button class="btn-main" style="height:45px;" onclick="toggleModal(false)">RETOUR</button>
+        <button class="btn-main" style="height:45px; margin-top:10px;" onclick="toggleModal('rulesModal', false)">FERMER</button>
     </div>
 </div>
 
-<div id="gameOverModal" class="modal" style="z-index: 5000;">
-    <div class="modal-content" style="text-align:center;"><h2 style="color:var(--loss);">CREDIT ÉPUISÉ</h2><button class="btn-main" style="background: var(--accent); margin-top:20px;" onclick="location.reload()">RECHARGER</button></div>
+<div id="gameOverModal" class="modal">
+    <div class="modal-content" style="text-align:center;">
+        <h2 style="color:var(--loss); margin-bottom:15px;">CRÉDIT ÉPUISÉ</h2>
+        <p style="margin-bottom:20px;">Solde insuffisant pour un nouveau ticket.</p>
+        <button class="btn-main" onclick="location.reload()">RECHARGER SOLDE</button>
+    </div>
 </div>
 
 <script>
-    let solde = 100, ticket = [], isGameOver = false, globalTaxes = 0, openedCases = 0;
+    let solde = 100, ticket = [], isGameOver = false, opened = 0, taxTotal = 0;
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    function toggleModal(show) { document.getElementById('rulesModal').style.display = show ? 'flex' : 'none'; }
+    function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+
+    function playScratchSnd() {
+        if (!document.getElementById('sound-on').checked) return;
+        const b = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate), d = b.getChannelData(0);
+        for (let i = 0; i < b.length; i++) d[i] = Math.random() * 2 - 1;
+        const n = audioCtx.createBufferSource(); n.buffer = b;
+        const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        n.connect(g).connect(audioCtx.destination); n.start();
+    }
+
+    function playSnd(freq, type, dur) {
+        if (!document.getElementById('sound-on').checked) return;
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
+    }
+
+    function getRandomPath() {
+        const p = []; const pts = 64; 
+        for(let i=0; i<pts; i++) {
+            let r = i/pts, x, y;
+            if (r < 0.25) { x = r*400; y = 4+Math.random()*6; } 
+            else if (r < 0.5) { x = 96-Math.random()*6; y = (r-0.25)*400; } 
+            else if (r < 0.75) { x = (1-(r-0.5)*4)*100; y = 96-Math.random()*6; } 
+            else { x = 4+Math.random()*6; y = (1-(r-0.75)*4)*100; }
+            p.push(`${x}% ${y}%`);
+        }
+        return `polygon(${p.join(',')})`;
+    }
 
     function buy() {
-        if(solde < 10) { document.getElementById('gameOverModal').style.display = 'flex'; return; }
+        if(solde < 10) { toggleModal('gameOverModal', true); return; }
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        solde -= 10; isGameOver = false; openedCases = 0;
+        solde -= 10; opened = 0; isGameOver = false;
         document.getElementById('btn-buy').style.display = 'none';
         document.getElementById('ev-display').style.display = 'block';
+        document.getElementById('res-zone').innerText = '';
         init(); upd();
     }
 
@@ -154,27 +228,25 @@
         ticket = [50, 20, 20, 0, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
         for(let i=0; i<9; i++) {
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
-            const content = ticket[i] > 0 
-                ? `<div class="win-coin"><span>${ticket[i]}€</span></div>`
-                : `<div class="loss-coin"><span>0€</span></div>`;
-            s.innerHTML = `<div class="dual-container" id="dual-${i}"><div class="zone-scratch" onclick="handleScratch(${i})"><span class="icon">🔍</span></div><div class="zone-bet" onclick="placeBet(${i})"><span class="icon">🎯</span></div></div><div class="reveal-content">${content}</div>`;
+            const coin = ticket[i] > 0 ? `<div class="win-coin">${ticket[i]}€</div>` : `<div class="loss-coin">0€</div>`;
+            s.innerHTML = `<div class="perm-bg"><div class="p-grey"></div><div class="p-green"></div>
+                <span class="ic ic-f ic-l">🔍</span><span class="ic ic-f ic-t">🎯</span></div>
+                <div class="reveal-layer"><div class="torn-wrapper" id="wrap-${i}"><div class="torn-hole" id="hole-${i}"></div></div><div class="coin-wrap">${coin}</div></div>
+                <div class="dual-btns" id="btns-${i}"><div class="z-s" onclick="handleScratch(${i})"><span class="ic ic-l">🔍</span></div><div class="z-b" onclick="placeBet(${i})"><span class="ic ic-t">🎯</span></div></div>`;
             g.appendChild(s);
         }
     }
 
     function handleScratch(idx) {
-        if(isGameOver || (9 - openedCases <= 2)) return;
+        if(isGameOver || (9-opened <= 2)) return;
         const sq = document.getElementById(`sq-${idx}`);
         if(!sq.classList.contains('open')) {
-            solde -= 0.10; globalTaxes += 0.10; sq.classList.add('open');
-            openedCases++;
-            if(ticket[idx] > 0) {
-                let goldsLeft = ticket.filter((v, i) => v > 0 && !document.getElementById(`sq-${i}`).classList.contains('open')).length;
-                if(goldsLeft === 0) {
-                    // Si on gratte le dernier gain, c'est perdu (plus rien à miser)
-                    sq.classList.add('final-loss'); 
-                    finishGame(0, "TICKET ÉPUISÉ");
-                }
+            solde -= 0.1; taxTotal += 0.1; opened++; sq.classList.add('open');
+            const wrap = document.getElementById(`wrap-${idx}`); const hole = document.getElementById(`hole-${idx}`);
+            wrap.style.clipPath = getRandomPath(); hole.classList.add('is-torn');
+            playScratchSnd();
+            if(ticket[idx] > 0 && ticket.filter((v, i) => v > 0 && !document.getElementById(`sq-${i}`).classList.contains('open')).length === 0) {
+                sq.classList.add('final-loss'); finish(0, "TICKET ÉPUISÉ");
             }
             upd();
         }
@@ -182,42 +254,32 @@
 
     function placeBet(idx) {
         if(isGameOver) return;
-        solde -= 0.10; globalTaxes += 0.10; const val = ticket[idx]; solde += val;
-        const sq = document.getElementById(`sq-${idx}`);
-        sq.classList.add('open', val > 0 ? 'final-win' : 'final-loss');
-        finishGame(val, val > 0 ? `GAGNÉ +${val}€` : "PERDU");
+        solde -= 0.1; taxTotal += 0.1; const v = ticket[idx]; solde += v;
+        const sq = document.getElementById(`sq-${idx}`); const wrap = document.getElementById(`wrap-${idx}`); const hole = document.getElementById(`hole-${idx}`);
+        wrap.style.clipPath = getRandomPath(); hole.classList.add('is-torn');
+        sq.classList.add('open', v > 0 ? 'final-win' : 'final-loss');
+        playSnd(v > 0 ? 880 : 110, v > 0 ? 'triangle' : 'square', 0.6);
+        finish(v, v > 0 ? `GAGNÉ +${v}€` : "PERDU");
     }
 
-    function finishGame(winVal, msg) {
-        isGameOver = true;
-        document.getElementById('res-zone').innerHTML = `<div style="font-size:1.8em; font-weight:900; color:${winVal > 0 ? 'var(--win)' : 'var(--loss)'}; margin: 10px 0;">${msg}</div>`;
-        document.getElementById('ev-display').style.display = 'none';
+    function finish(v, m) {
+        isGameOver = true; document.getElementById('ev-display').style.display = 'none';
+        const rz = document.getElementById('res-zone'); rz.innerText = m; rz.style.color = v > 0 ? '#27ae60' : '#e74c3c';
         for(let i=0; i<9; i++) {
-            const dual = document.getElementById(`dual-${i}`); if(dual) dual.style.display = 'none';
-            document.getElementById(`sq-${i}`).classList.add('open');
+            const sq = document.getElementById(`sq-${i}`); if(!sq.classList.contains('open')) sq.classList.add('open', 'reveal-all');
+            const btns = document.getElementById(`btns-${i}`); if(btns) btns.style.display = 'none';
         }
-        setTimeout(() => { document.getElementById('btn-buy').style.display = 'block'; if(solde < 10) document.getElementById('gameOverModal').style.display = 'flex'; }, 1200);
+        setTimeout(()=> { document.getElementById('btn-buy').style.display = 'block'; if(solde < 10) toggleModal('gameOverModal', true); }, 1200);
         upd();
     }
 
     function upd() { 
-        document.getElementById('bal').innerText = solde.toFixed(2); 
-        document.getElementById('global-tax').innerText = globalTaxes.toFixed(2);
-        let total = 0, count = 0;
-        for(let i=0; i<9; i++){
-            const sq = document.getElementById(`sq-${i}`);
-            if(sq && !sq.classList.contains('open')){ total += ticket[i]; count++; }
-        }
-        document.getElementById('ev-display').innerText = `ESPÉRANCE DE GAIN : ${(count > 0 ? total/count : 0).toFixed(2)}€`;
-
-        if ((9 - openedCases) <= 2 && !isGameOver) {
-            for(let i=0; i<9; i++) {
-                if(!document.getElementById(`sq-${i}`).classList.contains('open')) {
-                    const dual = document.getElementById(`dual-${i}`);
-                    if(dual) {
-                        dual.innerHTML = `<div class="final-bet-container" onclick="placeBet(${i})"><span class="icon">🎯</span></div>`;
-                    }
-                }
+        document.getElementById('bal').innerText = solde.toFixed(2); document.getElementById('tax').innerText = taxTotal.toFixed(2);
+        let rv = 0, rc = 0; for(let i=0; i<9; i++) if(!document.getElementById(`sq-${i}`).classList.contains('open')) { rv += ticket[i]; rc++; }
+        document.getElementById('ev-display').innerText = `ESPÉRANCE : ${(rc > 0 ? rv/rc : 0).toFixed(2)}€`;
+        if(opened === 7 && !isGameOver) {
+            for(let i=0; i<9; i++) if(!document.getElementById(`sq-${i}`).classList.contains('open')) {
+                document.getElementById(`btns-${i}`).innerHTML = `<div class="final-bet-overlay" onclick="placeBet(${i})"><span>🎯</span></div>`;
             }
         }
     }
