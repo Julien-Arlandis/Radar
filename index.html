@@ -3,209 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - Fair Play v1.7.34</title>
+    <title>RADAR 5/5 - v2.0.7 - Full Target Bet</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
             --bg: #0a0a0a; --card: #151515;
-            --scratch-grey: #222;
+            --scratch-grey: #888;
             --coin-bg: #ffcc00;
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            margin: 0; padding: 0; 
-            touch-action: manipulation;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; touch-action: manipulation; }
 
         body {
             font-family: 'Arial Black', sans-serif;
             background-color: var(--bg); color: white;
             height: 100dvh; width: 100vw; 
             display: flex; flex-direction: column; align-items: center;
-            overflow: hidden; 
-            user-select: none; -webkit-user-select: none;
+            overflow: hidden; user-select: none; -webkit-user-select: none;
         }
 
         .header {
             width: 100%; max-width: 500px; padding: 2vh 10px;
             display: flex; justify-content: space-around; align-items: center;
-            background: #000; border-bottom: 2px solid #222;
-            flex-shrink: 0;
+            background: #000; border-bottom: 2px solid #222; flex-shrink: 0;
+            z-index: 10;
         }
 
-        .stat-box { text-align: center; }
-        .stat-label { color: #666; font-size: 0.6em; display: block; text-transform: uppercase; }
         .stat-val { font-size: 1.3em; font-weight: bold; }
+        .stat-label { color: #666; font-size: 0.6em; display: block; text-transform: uppercase; }
 
         .container {
             width: 100%; max-width: 500px; flex: 1;
             background: var(--card); display: flex; flex-direction: column;
-            border-left: 1px solid #333; border-right: 1px solid #333;
-            min-height: 0; 
+            border-left: 1px solid #333; border-right: 1px solid #333; min-height: 0;
+            position: relative;
         }
 
-        .game-zone { 
-            flex: 3; display: flex; flex-direction: column; 
-            padding: 10px; min-height: 0;
-        }
+        .game-zone { flex: 3; display: flex; flex-direction: column; padding: 10px; min-height: 0; }
 
         .grid-master { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            grid-template-rows: repeat(3, 1fr);
-            gap: 8px; width: 100%; height: 100%;
-            margin: auto;
+            display: grid; grid-template-columns: repeat(3, 1fr); 
+            grid-template-rows: repeat(3, 1fr); gap: 8px; width: 100%; height: 100%; margin: auto;
         }
         
         .sq {
-            width: 100%; height: 100%;
-            background: #888; border-radius: 10px; 
+            width: 100%; height: 100%; background: #222; border-radius: 10px; 
             display: flex; align-items: center; justify-content: center;
             border: 2px solid #444; position: relative; overflow: hidden;
-            transition: border-color 0.2s, background 0.2s;
-            cursor: pointer;
+            transition: border 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Rollover Fond Gris */
-        .sq:not(.open):hover {
-            border-color: #666; background: #999;
+        /* --- SYSTÈME DUAL ZONE --- */
+        .dual-container { position: absolute; width: 100%; height: 100%; z-index: 20; }
+        
+        .zone-scratch { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--scratch-grey); clip-path: polygon(0 0, 100% 0, 0 100%); 
+            transition: background 0.2s; cursor: pointer;
+        }
+        .zone-scratch:hover { background: #999; }
+        .zone-scratch .icon { 
+            position: absolute;
+            top: 33.33%; left: 33.33%; 
+            transform: translate(-50%, -50%);
+            font-size: clamp(1.1em, 3.2vh, 1.5em);
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
         }
 
-        /* Annulation fond si survol jeton */
-        .sq:not(.open):has(.btn-bet-token:hover):hover,
-        .sq:not(.open):has(.btn-final-token:hover):hover {
-            background: #888 !important; border-color: #444 !important;
+        .zone-bet { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--win); clip-path: polygon(100% 0, 100% 100%, 0 100%); 
+            transition: background 0.2s; cursor: pointer;
+        }
+        .zone-bet:hover { background: #2ecc71; }
+        .zone-bet .icon { 
+            position: absolute;
+            top: 66.66%; left: 66.66%; 
+            transform: translate(-50%, -50%);
+            font-size: clamp(1.3em, 3.8vh, 1.8em);
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
         }
 
-        .sq.has-final:hover {
-            background: #888 !important; border-color: #444 !important;
-            cursor: default;
-        }
+        .sq.open .dual-container { display: none; }
 
-        .reveal-content {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--scratch-grey); opacity: 0; z-index: 5;
-            -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0.7) 100%);
-            mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0.7) 100%);
-            pointer-events: none;
-        }
-
-        .sq.open .reveal-content { opacity: 1; }
-
-        .win-coin, .loss-coin {
-            width: 75%; height: 75%; max-width: 70px; max-height: 70px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900;
-        }
-
-        .win-coin { background: var(--coin-bg); box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 0 15px rgba(255, 204, 0, 0.4); border: 3px solid #e6b800; color: #000; }
-        .loss-coin { background: #333; border: 3px solid #444; color: #666; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-
+        /* --- BORDURES FIN --- */
         .sq.final-win { border: 5px solid var(--win) !important; box-shadow: 0 0 20px var(--win); z-index: 50; }
         .sq.final-loss { border: 5px solid var(--loss) !important; box-shadow: 0 0 20px var(--loss); z-index: 50; }
 
-        .gain-text, .loss-text-val { font-size: clamp(0.7em, 3.5vh, 1.4em); font-weight: 900; }
+        /* --- PIÈCES PREMIUM --- */
+        .reveal-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; opacity: 0; z-index: 5; }
+        .sq.open .reveal-content { opacity: 1; }
+        .win-coin { width: 75%; height: 75%; max-width: 70px; max-height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: var(--coin-bg); box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 0 15px rgba(255, 204, 0, 0.4); border: 3px solid #e6b800; color: #000; }
+        .loss-coin { width: 75%; height: 75%; max-width: 70px; max-height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: #333; border: 3px solid #444; color: #666; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
 
-        .btn-bet-token, .btn-final-token {
-            background: var(--win); color: white; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 900; border: 2px solid #fff;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.6); 
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer; z-index: 100;
-        }
+        /* --- MISE FINALE SANS CERCLE & FULL FOND --- */
+        .final-bet-container { position: absolute; width: 100%; height: 100%; background: var(--win); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .final-bet-container .icon { font-size: 5.5em; pointer-events: none; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .final-bet-container:hover { background: #2ecc71; transform: scale(1.05); }
+        .final-bet-container:hover .icon { transform: scale(1.1); }
 
-        .btn-bet-token { 
-            position: absolute; bottom: 4%; left: 4%; 
-            width: clamp(30px, 6vh, 45px); height: clamp(30px, 6vh, 45px);
-            font-size: clamp(0.7em, 1.8vh, 1.1em);
-        }
-        .btn-bet-token:hover { transform: scale(1.15); box-shadow: 0 0 15px var(--win); }
+        /* --- BOUTONS PRINCIPAUX ROLLOVER --- */
+        .terminal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; min-height: 120px; }
+        .btn-main { height: 60px; width: 90%; max-width: 400px; border-radius: 12px; font-weight: bold; cursor: pointer; background: var(--accent); color: black; font-size: 1.1em; box-shadow: 0 5px 0 #b38f00; border:none; transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.1s ease; position: relative; top: 0; }
+        .btn-main:hover { background: #ffe066; transform: translateY(-2px); box-shadow: 0 7px 0 #b38f00; }
+        .btn-main:active { transform: translateY(3px); box-shadow: 0 2px 0 #b38f00; }
 
-        .btn-final-token { 
-            width: clamp(75px, 15vh, 110px); height: clamp(75px, 15vh, 110px); 
-            font-size: 3em; border-width: 4px; animation: pulse 1.5s infinite; 
-        }
-        .btn-final-token:hover { transform: scale(1.1) !important; box-shadow: 0 0 30px var(--win); animation: none; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.1); align-items: center; justify-content: center; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; border: 3px solid var(--accent); width: 85%; max-width: 380px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+        .paytable { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.8em; background: #111; }
+        .paytable th, .paytable td { padding: 10px; border: 1px solid #333; text-align: center; }
+        .paytable th { background: #222; color: var(--accent); }
 
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 10px rgba(39, 174, 96, 0.5); }
-            50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(39, 174, 96, 0.8); }
-            100% { transform: scale(1); box-shadow: 0 0 10px rgba(39, 174, 96, 0.5); }
-        }
-
-        .terminal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; padding: 10px; }
-        
-        .ev-display {
-            font-size: 0.85em; color: var(--accent); margin-bottom: 10px;
-            background: rgba(255, 204, 0, 0.1); padding: 5px 15px;
-            border-radius: 20px; border: 1px solid rgba(255, 204, 0, 0.3);
-            display: none; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-
-        .btn-main { height: 70%; max-height: 60px; width: 90%; max-width: 400px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; background: var(--accent); color: black; font-size: 1.1em; transition: transform 0.2s, background 0.2s, box-shadow 0.2s; box-shadow: 0 4px 0 #b38f00; }
-        .res-big { font-size: 1.8em; font-weight: 900; margin-top: 10px; margin-bottom: 5px; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-
-        .modal-go { display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.15); align-items: center; justify-content: center; }
-        .go-card { background: rgba(21, 21, 21, 0.98); padding: 30px; border-radius: 20px; border: 3px solid var(--loss); width: 85%; max-width: 360px; text-align: center; box-shadow: 0 10px 60px rgba(0,0,0,0.9); }
-        .btn-restart-all { width: 100%; padding: 15px; background: var(--accent); color: #000; border: none; border-radius: 12px; font-size: 1.2em; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b38f00; margin-top: 20px; }
-
-        .footer { width: 100%; max-width: 500px; padding: 1vh 15px; display: flex; justify-content: space-between; align-items: center; background: #000; font-size: 0.6em; color: #444; border-top: 1px solid #222; flex-shrink: 0; }
-        .btn-rules { background: #333; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 1em; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 15px; border: 2px solid var(--accent); width: 90%; max-width: 360px; text-align: left; }
-        .btn-close { display: block; width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 1em; }
+        .footer { width: 100%; max-width: 500px; padding: 1vh 15px; display: flex; justify-content: space-around; align-items: center; background: #000; font-size: 0.6em; color: #444; border-top: 1px solid #222; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="stat-box">
-        <span class="stat-label">SOLDE</span>
-        <div class="stat-val" style="color:var(--win)"><span id="bal">100.00</span>€</div>
-    </div>
-    <div class="stat-box">
-        <span class="stat-label">TAXES BANQUE</span>
-        <div class="stat-val" style="color:var(--loss)"><span id="global-tax">0.00</span>€</div>
-    </div>
+    <div class="stat-box"><span class="stat-label">SOLDE</span><div id="bal" class="stat-val" style="color:var(--win)">100.00</div></div>
+    <div class="stat-box"><span class="stat-label">TAXES BANQUE</span><div id="global-tax" class="stat-val" style="color:var(--loss)">0.00</div></div>
 </div>
 
 <div class="container">
-    <div class="game-zone">
-        <div class="grid-master" id="grid"></div>
-    </div>
+    <div class="game-zone"><div class="grid-master" id="grid"></div></div>
     <div id="terminal" class="terminal">
-        <div id="ev-display" class="ev-display">ESPÉRANCE DE GAIN : 0.00€</div>
+        <div id="ev-display" style="font-size: 0.85em; color: var(--accent); margin-bottom: 10px; background: rgba(255, 204, 0, 0.1); padding: 5px 15px; border-radius: 20px; display: none; border: 1px solid rgba(255, 204, 0, 0.3);">ESPÉRANCE DE GAIN : 0.00€</div>
         <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
         <div id="res-zone"></div>
     </div>
 </div>
 
 <div class="footer">
-    <button class="btn-rules" onclick="toggleModal(true)">RÈGLES</button>
-    <label style="cursor:pointer;"><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>VER: 1.7.34</span>
-</div>
-
-<div id="gameOverModal" class="modal-go">
-    <div class="go-card">
-        <h2 style="color:var(--loss); font-size:2em; margin-bottom:10px;">CREDIT ÉPUISÉ</h2>
-        <button class="btn-restart-all" onclick="location.reload()">RECHARGER CRÉDITS (100€)</button>
-    </div>
+    <button style="background: #333; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 1.2em;" onclick="toggleModal(true)">RÈGLES</button>
+    <label><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
+    <span>v2.0.7</span>
 </div>
 
 <div id="rulesModal" class="modal">
     <div class="modal-content">
-        <h2>RÈGLES DU JEU</h2>
-        <p>1. <b>Achat</b> : Le ticket coûte 10.00€.</p>
-        <p>2. <b>Nettoyage</b> : Gratter une case coûte <span style="color:var(--loss);font-weight:bold;">0.10€</span>.</p>
-        <p>3. <b>Mise</b> : Utiliser le bouton <b>€</b> pour encaisser coûte aussi <span style="color:var(--loss);font-weight:bold;">0.10€</span>.</p>
-        <p>4. <b>Espérance de gain</b> : Représente le gain moyen théorique si vous ouvrez une case au hasard parmi celles restantes.</p>
-        <button class="btn-close" onclick="toggleModal(false)">OK</button>
+        <h2 style="color:var(--accent)">RÈGLES DU JEU</h2>
+        <p>• <b>🔍 Zone Grise</b> : Gratter (0.10€)</p>
+        <p>• <b>🎯 Zone Verte</b> : Miser (0.10€)</p>
+        <table class="paytable">
+            <thead><tr><th>QTÉ</th><th>GAIN</th></tr></thead>
+            <tbody><tr><td>1</td><td style="color:var(--accent)">50.00€</td></tr><tr><td>2</td><td style="color:var(--accent)">20.00€</td></tr><tr><td>6</td><td>0.00€</td></tr></tbody>
+        </table>
+        <button class="btn-main" style="height:45px; margin-top:20px;" onclick="toggleModal(false)">RETOUR</button>
     </div>
+</div>
+
+<div id="gameOverModal" class="modal" style="z-index: 5000;">
+    <div class="modal-content" style="text-align:center;"><h2 style="color:var(--loss);">CREDIT ÉPUISÉ</h2><button class="btn-main" style="background: var(--accent); margin-top:20px;" onclick="location.reload()">RECHARGER</button></div>
 </div>
 
 <script>
@@ -214,38 +162,13 @@
 
     function toggleModal(show) { document.getElementById('rulesModal').style.display = show ? 'flex' : 'none'; }
 
-    function playScratchSnd() {
-        if (!document.getElementById('sound-on').checked) return;
-        const bufferSize = audioCtx.sampleRate * 0.05;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-        const noise = audioCtx.createBufferSource(); noise.buffer = buffer;
-        const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1200; filter.Q.value = 1;
-        const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-        noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); noise.start();
-    }
-
-    function playSnd(freq, type, dur, vol=0.1) {
-        if (!document.getElementById('sound-on').checked) return;
-        try {
-            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            g.gain.setValueAtTime(vol, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
-            osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + dur);
-        } catch(e) {}
-    }
-
     function buy() {
         if(solde < 10) { document.getElementById('gameOverModal').style.display = 'flex'; return; }
         if (audioCtx.state === 'suspended') audioCtx.resume();
         solde -= 10; isGameOver = false; openedCases = 0;
         document.getElementById('btn-buy').style.display = 'none';
         document.getElementById('ev-display').style.display = 'block';
-        document.getElementById('res-zone').innerHTML = '<span style="font-family: monospace; font-size: 0.55em; color: #555;">ID: ' + Math.random().toString(36).substr(2, 8).toUpperCase() + '</span>';
-        playSnd(600, 'sine', 0.1, 0.05); init(); upd();
+        init(); upd();
     }
 
     function init() {
@@ -253,30 +176,22 @@
         ticket = [50, 20, 20, 0, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
         for(let i=0; i<9; i++) {
             let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
-            s.onclick = (e) => { if(e.target.classList.contains('btn-bet-token') || e.target.classList.contains('btn-final-token')) return; handleScratch(i); };
             const content = ticket[i] > 0 
-                ? `<div class="win-coin"><span class="gain-text">${ticket[i]}€</span></div>`
-                : `<div class="loss-coin"><span class="loss-text-val">0€</span></div>`;
-            s.innerHTML = `<div class="reveal-content" id="reveal-${i}" style="clip-path: ${generateUltraJaggedPath()}">${content}</div>
-                           <div class="btn-bet-token" id="bet-token-${i}" 
-                                onclick="event.stopPropagation(); placeBet(${i})"
-                                ontouchend="event.stopPropagation(); placeBet(${i})">€</div>`;
+                ? `<div class="win-coin"><span>${ticket[i]}€</span></div>`
+                : `<div class="loss-coin"><span>0€</span></div>`;
+            s.innerHTML = `<div class="dual-container" id="dual-${i}"><div class="zone-scratch" onclick="handleScratch(${i})"><span class="icon">🔍</span></div><div class="zone-bet" onclick="placeBet(${i})"><span class="icon">🎯</span></div></div><div class="reveal-content">${content}</div>`;
             g.appendChild(s);
         }
     }
 
     function handleScratch(idx) {
         if(isGameOver || (9 - openedCases <= 2)) return;
-        const sq = document.getElementById(`sq-${idx}`);
-        if(!sq.classList.contains('open')) {
-            solde -= 0.10; globalTaxes += 0.10;
-            sq.classList.add('open');
-            const token = document.getElementById(`bet-token-${idx}`); if(token) token.style.display = 'none';
-            playScratchSnd(); openedCases++;
+        if(!document.getElementById(`sq-${idx}`).classList.contains('open')) {
+            solde -= 0.10; globalTaxes += 0.10; document.getElementById(`sq-${idx}`).classList.add('open');
+            openedCases++;
             if(ticket[idx] > 0) {
-                // On vérifie s'il reste des golds
                 let goldsLeft = ticket.filter((v, i) => v > 0 && !document.getElementById(`sq-${i}`).classList.contains('open')).length;
-                if(goldsLeft === 0) { isGameOver = true; finishGame(0, "TICKET ÉPUISÉ"); }
+                if(goldsLeft === 0) finishGame(0, "TICKET ÉPUISÉ");
             }
             upd();
         }
@@ -284,81 +199,45 @@
 
     function placeBet(idx) {
         if(isGameOver) return;
-        isGameOver = true; solde -= 0.10; globalTaxes += 0.10;
-        const val = ticket[idx]; solde += val;
+        solde -= 0.10; globalTaxes += 0.10; const val = ticket[idx]; solde += val;
         const sq = document.getElementById(`sq-${idx}`);
         sq.classList.add('open', val > 0 ? 'final-win' : 'final-loss');
-        if(val > 0) playSnd(880, 'triangle', 0.5, 0.1); else playSnd(80, 'square', 0.6, 0.1);
         finishGame(val, val > 0 ? `GAGNÉ +${val}€` : "PERDU");
     }
 
     function finishGame(winVal, msg) {
-        const resZone = document.getElementById('res-zone');
-        resZone.innerHTML = `<div class="res-big" style="color:${winVal > 0 ? 'var(--win)' : 'var(--loss)'}">${msg}</div>`;
+        isGameOver = true;
+        document.getElementById('res-zone').innerHTML = `<div style="font-size:1.8em; font-weight:900; color:${winVal > 0 ? 'var(--win)' : 'var(--loss)'}; margin: 10px 0;">${msg}</div>`;
         document.getElementById('ev-display').style.display = 'none';
         for(let i=0; i<9; i++) {
-            const sq = document.getElementById(`sq-${i}`);
-            const rev = document.getElementById(`reveal-${i}`);
-            const token = document.getElementById(`bet-token-${i}`); if(token) token.style.display = 'none';
-            const finalBtn = document.getElementById(`final-token-${i}`); if(finalBtn) finalBtn.style.display = 'none';
-            if(!sq.classList.contains('open')) {
-                rev.style.clipPath = 'none'; rev.style.webkitMaskImage = 'none'; rev.style.maskImage = 'none';
-                sq.classList.add('open', 'revealed');
-            }
+            const dual = document.getElementById(`dual-${i}`); if(dual) dual.style.display = 'none';
+            document.getElementById(`sq-${i}`).classList.add('open');
         }
-        setTimeout(() => { 
-            document.getElementById('btn-buy').style.display = 'block';
-            if(solde < 10) document.getElementById('gameOverModal').style.display = 'flex';
-        }, 800); 
+        setTimeout(() => { document.getElementById('btn-buy').style.display = 'block'; if(solde < 10) document.getElementById('gameOverModal').style.display = 'flex'; }, 1200);
         upd();
-    }
-
-    function generateUltraJaggedPath() {
-        let pts = []; const segs = 15;
-        for(let i=0; i<=segs; i++) pts.push(`${(i/segs)*100}% ${Math.random()*10}%`);
-        for(let i=1; i<=segs; i++) pts.push(`${100 - Math.random()*10}% ${(i/segs)*100}%`);
-        for(let i=segs-1; i>=0; i--) pts.push(`${(i/segs)*100}% ${100 - Math.random()*10}%`);
-        for(let i=segs-1; i>0; i--) pts.push(`${Math.random()*10}% ${(i/segs)*100}%`);
-        return `polygon(${pts.join(', ')})`;
     }
 
     function upd() { 
         document.getElementById('bal').innerText = solde.toFixed(2); 
         document.getElementById('global-tax').innerText = globalTaxes.toFixed(2);
-        
-        let totalRemaining = 0;
-        let closedCount = 0;
+        let total = 0, count = 0;
         for(let i=0; i<9; i++){
             const sq = document.getElementById(`sq-${i}`);
-            if(sq && !sq.classList.contains('open')){
-                totalRemaining += ticket[i];
-                closedCount++;
-            }
+            if(sq && !sq.classList.contains('open')){ total += ticket[i]; count++; }
         }
-        const evVal = closedCount > 0 ? (totalRemaining / closedCount) : 0;
-        const evDisplay = document.getElementById('ev-display');
-        if(evDisplay) evDisplay.innerText = `ESPÉRANCE DE GAIN : ${evVal.toFixed(2)}€`;
+        document.getElementById('ev-display').innerText = `ESPÉRANCE DE GAIN : ${(count > 0 ? total/count : 0).toFixed(2)}€`;
 
-        const remaining = 9 - openedCases;
-        if (remaining <= 2 && !isGameOver) {
+        if ((9 - openedCases) <= 2 && !isGameOver) {
             for(let i=0; i<9; i++) {
-                const sq = document.getElementById(`sq-${i}`);
-                if(!sq.classList.contains('open')) {
-                    const token = document.getElementById(`bet-token-${i}`); if(token) token.style.display = 'none';
-                    sq.classList.add('has-final');
-                    if(!document.getElementById(`final-token-${i}`)) {
-                        const ft = document.createElement('div');
-                        ft.id = `final-token-${i}`; ft.className = 'btn-final-token';
-                        ft.innerText = '€';
-                        ft.onclick = (e) => { e.stopPropagation(); placeBet(i); };
-                        ft.ontouchend = (e) => { e.stopPropagation(); placeBet(i); };
-                        sq.appendChild(ft);
+                if(!document.getElementById(`sq-${i}`).classList.contains('open')) {
+                    const dual = document.getElementById(`dual-${i}`);
+                    if(dual) {
+                        dual.innerHTML = `<div class="final-bet-container" onclick="placeBet(${i})"><span class="icon">🎯</span></div>`;
                     }
                 }
             }
         }
     }
-    upd();
 </script>
 </body>
 </html>
