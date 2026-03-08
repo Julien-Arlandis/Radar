@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - v2.5.8</title>
+    <title>RADAR 5/5 - v2.5.8 (Corrected)</title>
     <style>
         :root {
             --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
@@ -92,7 +92,6 @@
             background: var(--win); z-index: 110; cursor: pointer; 
             transition: 0.2s;
         }
-        .final-bet-overlay:hover { background: #2ecc71; }
         .final-bet-overlay span { 
             position: absolute; top: 50%; left: 50%;
             transform: translate(-55%, -65%); 
@@ -198,6 +197,16 @@
         o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
     }
 
+    // SON DE DÉFAITE V2.5.8 (Dégringolade)
+    function playFailSnd() {
+        if (!document.getElementById('sound-on').checked) return;
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(150, audioCtx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.8);
+        g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
+        o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.8);
+    }
+
     function getRandomPath() {
         const p = []; const pts = 64; 
         for(let i=0; i<pts; i++) {
@@ -243,9 +252,24 @@
             const wrap = document.getElementById(`wrap-${idx}`); const hole = document.getElementById(`hole-${idx}`);
             wrap.style.clipPath = getRandomPath(); hole.classList.add('is-torn');
             playScratchSnd();
-            if(ticket[idx] > 0 && ticket.filter((v, i) => v > 0 && !document.getElementById(`sq-${i}`).classList.contains('open')).length === 0) {
-                sq.classList.add('final-loss'); finish(0, "TICKET ÉPUISÉ");
+            
+            // --- LOGIQUE V2.5.8 : DÉCOMPTE DES GAINS DÉCOUVERTS ---
+            let lotsReveles = 0;
+            for(let i=0; i<9; i++) {
+                // On compte les cases ouvertes via la loupe (z-s) qui contiennent un gain
+                if(ticket[i] > 0 && document.getElementById(`sq-${i}`).classList.contains('open') && !document.getElementById(`sq-${i}`).classList.contains('final-win')) {
+                    lotsReveles++;
+                }
             }
+
+            // SI LES 3 LOTS SONT GRATTÉS : ÉCHEC DE LA STRATÉGIE
+            if(lotsReveles === 3) {
+                sq.classList.add('final-loss'); 
+                playFailSnd();
+                finish(0, "TICKET ÉPUISÉ (3 LOTS SORTIS)");
+                return;
+            }
+            
             upd();
         }
     }
