@@ -3,309 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR 5/5 - v2.5.8 (Corrected)</title>
+    <title>RADAR v4.9 - Chromatic Harmony</title>
     <style>
-        :root {
-            --win: #27ae60; --loss: #e74c3c; --accent: #ffcc00;
-            --bg: #0a0a0a; --card: #151515;
-            --scratch-grey: #888;
-            --coin-bg: #ffcc00;
+        :root { 
+            --primary: #4ecca3; /* Cyan clair */
+            --danger: #e94560;  /* Rouge Cerise */
+            --bg: #1a1a2e;      /* Indigo très sombre */
+            --panel: rgba(22, 33, 62, 0.95); /* Indigo sombre transparent */
+            --border: #3c3c5e;  /* Indigo gris clair pour bordures */
+            --text-muted: #8888b3; /* Indigo gris très clair pour texte muted */
         }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; touch-action: manipulation; }
-
-        body {
-            font-family: 'Arial Black', sans-serif;
-            background-color: var(--bg); color: white;
-            height: 100dvh; width: 100vw; 
-            display: flex; flex-direction: column; align-items: center;
-            overflow: hidden; user-select: none;
-        }
-
-        .header {
-            width: 100%; max-width: 500px; padding: 15px 10px;
-            display: flex; justify-content: space-around; align-items: center;
-            background: #000; border-bottom: 2px solid #222; flex-shrink: 0;
-        }
-
-        .stat-val { font-size: 1.2em; font-weight: bold; display: inline-block; }
-        .stat-label { color: #666; font-size: 0.6em; display: block; text-transform: uppercase; }
-
-        .container {
-            width: 100%; max-width: 500px; flex: 1;
-            background: var(--card); display: flex; flex-direction: column;
-            border-left: 1px solid #333; border-right: 1px solid #333; position: relative;
-        }
-
-        .game-zone { flex: 3; display: flex; flex-direction: column; padding: 10px; min-height: 0; }
-
-        .grid-master { 
-            display: grid; grid-template-columns: repeat(3, 1fr); 
-            grid-template-rows: repeat(3, 1fr); gap: 8px; width: 100%; height: 100%;
-        }
+        * { box-sizing: border-box; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent; }
         
-        .sq {
-            width: 100%; height: 100%; background: #222; border-radius: 10px; 
-            position: relative; overflow: hidden; border: 2px solid #444;
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; 
+            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; 
+            height: 100vh; overflow: hidden;
         }
 
-        .perm-bg { position: absolute; width: 100%; height: 100%; z-index: 1; }
-        .p-grey { position: absolute; width:100%; height:100%; background: var(--scratch-grey); clip-path: polygon(0 0, 100% 0, 0 100%); }
-        .p-green { position: absolute; width:100%; height:100%; background: var(--win); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
-        .perm-bg .ic-f { position: absolute; transform: translate(-50%, -50%); opacity: 0.15; color: white; pointer-events: none; }
+        /* HEADER AVEC SOLDE EN HAUT */
+        .header-ui { 
+            width: 100%; max-width: 400px; background: var(--panel); padding: 15px; 
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); 
+            flex-shrink: 0; margin-bottom: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.6); 
+        }
 
-        .reveal-layer { position: absolute; width: 100%; height: 100%; z-index: 5; opacity: 0; transition: opacity 0.3s; }
-        .sq.open .reveal-layer { opacity: 1; }
-
-        .torn-wrapper { position: absolute; width: 100%; height: 100%; z-index: 6; }
-        .torn-hole { position: absolute; width: 100%; height: 100%; background: #111; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         
-        .svg-depth-mask { position: absolute; width: 0; height: 0; visibility: hidden; }
+        .solde-container { font-weight: bold; font-size: 1.1em; text-align: right; }
+        .solde-label { color: var(--text-muted); margin-right: 5px; font-size: 0.8em; text-transform: uppercase; }
+        .solde-val { color: var(--primary); text-shadow: 0 0 10px rgba(78,204,163,0.2); }
 
-        .is-torn { 
-            filter: url(#massiveInnerShadow);
-            border: 1px solid rgba(255,255,255,0.08);
+        .btn-rules { 
+            background: transparent; color: var(--text-muted); border: 1px solid var(--border); 
+            padding: 5px 15px; border-radius: 8px; font-size: 0.75em; cursor: pointer; 
         }
+        .btn-rules:hover { border-color: var(--primary); color: var(--primary); transform: scale(1.05); background: rgba(78, 204, 163, 0.05); }
 
-        .reveal-all .torn-wrapper { clip-path: none !important; }
-        .reveal-all .torn-hole { background: #111 !important; filter: none !important; border: none !important; }
-
-        .coin-wrap { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 7; }
-
-        .dual-btns { position: absolute; width: 100%; height: 100%; z-index: 100; }
-        .z-s, .z-b { position: absolute; width: 100%; height: 100%; cursor: pointer; transition: 0.2s; }
-        .z-s { background: var(--scratch-grey); clip-path: polygon(0 0, 100% 0, 0 100%); }
-        .z-b { background: var(--win); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+        .btn-cashout { 
+            background: var(--primary); color: #0a0a1a; border: none; padding: 15px; 
+            border-radius: 12px; font-weight: 900; cursor: pointer; width: 100%; 
+            display: flex; justify-content: center; align-items: center; gap: 12px;
+            box-shadow: 0 4px 15px rgba(78, 204, 163, 0.2);
+        }
+        .btn-cashout:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(78, 204, 163, 0.3); }
+        .btn-cashout:disabled { background: #3c3c5e !important; opacity: 0.5; cursor: default; filter: grayscale(1); color: #8888b3; }
         
-        .z-s:hover { background: #999; }
-        .z-b:hover { background: #2ecc71; }
-        .z-s:active, .z-b:active { filter: brightness(0.8); }
+        .cashout-text, .cashout-val { font-size: 1.3em; letter-spacing: 0.5px; }
 
-        .ic { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-        .ic-l { margin-top: -16.66%; margin-left: -16.66%; font-size: 1.4em; }
-        .ic-t { margin-top: 16.66%; margin-left: 16.66%; font-size: 1.7em; }
-
-        .sq.open .dual-btns { display: none; }
-
-        .final-bet-overlay { 
-            position: absolute; top:0; left:0; width: 100%; height: 100%; 
-            background: var(--win); z-index: 110; cursor: pointer; 
-            transition: 0.2s;
-        }
-        .final-bet-overlay span { 
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-55%, -65%); 
-            font-size: 5.5em; line-height: 0; display: block; pointer-events: none;
-        }
-
-        .win-coin { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: var(--coin-bg); border: 3px solid #e6b800; color: #000; box-shadow: 0 0 15px rgba(255,204,0,0.3); }
-        .loss-coin { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: #333; border: 3px solid #444; color: #666; }
-
-        .sq.final-win { border: 5px solid var(--win) !important; box-shadow: 0 0 25px var(--win) !important; z-index: 200; }
-        .sq.final-loss { border: 5px solid var(--loss) !important; box-shadow: 0 0 25px var(--loss) !important; z-index: 200; }
-
-        .terminal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; min-height: 120px; }
-        .btn-main { height: 55px; width: 90%; max-width: 400px; border-radius: 12px; font-weight: bold; cursor: pointer; background: var(--accent); color: black; border:none; box-shadow: 0 5px 0 #b38f00; transition: 0.1s; position: relative; }
-        .btn-main:hover { background: #ffe066; transform: translateY(-2px); box-shadow: 0 7px 0 #b38f00; }
-
-        .ev-box { font-size: 0.85em; color: var(--accent); margin-bottom: 10px; background: rgba(255,204,0,0.1); padding: 6px 18px; border-radius: 20px; border: 1px solid rgba(255,204,0,0.3); display: none; }
-
-        .footer { width: 100%; max-width: 500px; padding: 10px; display: flex; justify-content: space-around; align-items: center; background: #000; font-size: 0.7em; color: #444; border-top: 1px solid #222; }
+        /* GRILLE FIGÉE */
+        .game-area { width: 100%; max-width: 400px; height: 410px; display: flex; flex-direction: column; flex-shrink: 0; justify-content: center; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; height: 400px; width: 100%; }
         
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
-        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; border: 3px solid var(--accent); width: 85%; max-width: 400px; text-align: left; line-height: 1.4; }
-        .paytable { width: 100%; border-collapse: collapse; margin: 15px 0; background: #111; }
-        .paytable td { padding: 10px; border: 1px solid #333; color: white; text-align: center; }
+        .cell { background: #101827; border: 2px solid #2d2d44; border-radius: 18px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cell:hover:not(.revealed) { border-color: var(--danger); transform: scale(1.04) translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 10; background: #1a1a2e; }
+        .cell.revealed { cursor: default; background: #0b0f19; border-color: #1f1f2e; }
+
+        .scratch-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        .coin { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2em; z-index: 1; }
+        .coin-win { background: linear-gradient(145deg, #ffd700, #d4ac0d); color: #0a0a1a; border: 3px solid #fff; box-shadow: 0 5px 15px rgba(212, 172, 13, 0.3); }
+        .coin-loss { background: linear-gradient(145deg, #bdc3c7, #2c3e50); color: #fff; border: 3px solid #7f8c8d; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        .footer-ui { width: 100%; max-width: 400px; height: 100px; flex-shrink: 0; margin-top: 15px; }
+        
+        .btn-new { 
+            background: var(--danger); color: white; border: none; padding: 14px; 
+            border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 8px; font-size: 1em; 
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.2);
+        }
+        .btn-new:hover { background: #ff506b; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(233, 69, 96, 0.3); }
+
+        /* MODAL RÈGLES EXPLICITES */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(6px); justify-content: center; align-items: center; }
+        .modal-content { background: #16213e; padding: 25px; border-radius: 20px; border: 1px solid rgba(78, 204, 163, 0.2); max-width: 360px; width: 92%; line-height: 1.4; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
+        .modal-content h2 { color: var(--primary); margin: 0 0 15px 0; font-size: 1.4em; border-bottom: 1px solid #2d2d44; padding-bottom: 10px; text-shadow: 0 0 10px rgba(78,204,163,0.2); }
+        
+        .distrib-table { width: 100%; margin: 15px 0; border-collapse: collapse; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; border: 1px solid #2d2d44; }
+        .distrib-table th, .distrib-table td { padding: 10px; border: 1px solid #2d2d44; text-align: center; }
+        .distrib-table th { background: rgba(78, 204, 163, 0.05); color: var(--primary); font-size: 0.8em; letter-spacing: 0.5px; }
+
+        .rules-list { padding-left: 18px; font-size: 0.85em; color: #b3b3cc; }
+        .rules-list li { margin-bottom: 8px; }
+
+        .close-modal { background: var(--primary); color: #0a0a1a; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(78, 204, 163, 0.2); }
+        .close-modal:hover { filter: brightness(1.1); transform: scale(1.02); }
+
+        @keyframes slideUp { 0% { transform: translateY(15px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-<svg class="svg-depth-mask" width="0" height="0">
-  <defs>
-    <filter id="massiveInnerShadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feComponentTransfer in=SourceAlpha><feFuncA type="linear" slope="-1" intercept="1"/></feComponentTransfer>
-      <feGaussianBlur stdDeviation="20"/><feOffset dx="0" dy="0"/><feComposite operator="arithmetic" k2="-1" k3="1" in2="SourceAlpha"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.95 0"/><feComposite operator="in" in2="SourceAlpha"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-</svg>
-
-<div class="header">
-    <div class="stat-box"><span class="stat-label">SOLDE</span><div id="bal" style="color:var(--win)" class="stat-val">100.00 €</div></div>
-    <div class="stat-box"><span class="stat-label">TAXES BANQUE</span><div id="tax" style="color:var(--loss)" class="stat-val">0.00 €</div></div>
-</div>
-
-<div class="container">
-    <div class="game-zone"><div class="grid-master" id="grid"></div></div>
-    <div id="terminal" class="terminal">
-        <div id="ev-display" class="ev-box">ESPÉRANCE : 0.00€</div>
-        <button id="btn-buy" class="btn-main" onclick="buy()">ACHETER TICKET (10€)</button>
-        <div id="res-zone" style="font-weight:900; font-size:1.5em; margin-top:5px;"></div>
+    <div class="header-ui">
+        <div class="top-bar">
+            <button class="btn-rules" onclick="toggleModal(true)">RÈGLES & GAINS</button>
+            <div class="solde-container">
+                <span class="solde-label">SOLDE</span>
+                <span id="display-solde" class="solde-val">100.00 €</span>
+            </div>
+        </div>
+        <button id="btn-cashout" class="btn-cashout" onclick="cashOut()" disabled>
+            <span class="cashout-text">ENCAISSER</span>
+            <span id="btn-val-esperance" class="cashout-val">11.00 €</span>
+        </button>
     </div>
-</div>
 
-<div class="footer">
-    <button style="background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;" onclick="toggleModal('rulesModal', true)">RÈGLES</button>
-    <label><input type="checkbox" id="sound-on" checked> SON ACTIF</label>
-    <span>v2.5.8</span>
-</div>
-
-<div id="rulesModal" class="modal">
-    <div class="modal-content">
-        <h2 style="color:var(--accent); text-align:center; margin-bottom:10px;">COMMENT JOUER</h2>
-        <p>• 🔍 <b>Zone Grise</b> : Gratter (0.10€). Révèle le contenu.</p>
-        <p>• 🎯 <b>Zone Verte</b> : Miser (0.10€). Tente de gagner le contenu.</p>
-        <table class="paytable">
-            <tr><td colspan="2" style="background:#222; font-weight:bold; color:var(--accent)">TABLEAU DES GAINS</td></tr>
-            <tr><td>1x</td><td style="font-weight:bold;">50.00 €</td></tr>
-            <tr><td>2x</td><td style="font-weight:bold;">20.00 €</td></tr>
-            <tr><td>6x</td><td>0.00 €</td></tr>
-        </table>
-        <button class="btn-main" style="height:45px; margin-top:10px;" onclick="toggleModal('rulesModal', false)">FERMER</button>
+    <div class="game-area">
+        <div class="grid" id="grid"></div>
     </div>
-</div>
 
-<div id="gameOverModal" class="modal">
-    <div class="modal-content" style="text-align:center;">
-        <h2 style="color:var(--loss); margin-bottom:15px;">CRÉDIT ÉPUISÉ</h2>
-        <p style="margin-bottom:20px;">Solde insuffisant pour un nouveau ticket.</p>
-        <button class="btn-main" onclick="location.reload()">RECHARGER SOLDE</button>
-    </div>
-</div>
+    <div id="footer-ui" class="footer-ui"></div>
 
-<script>
-    let solde = 100, ticket = [], isGameOver = false, opened = 0, taxTotal = 0;
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-
-    function playScratchSnd() {
-        if (!document.getElementById('sound-on').checked) return;
-        const b = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate), d = b.getChannelData(0);
-        for (let i = 0; i < b.length; i++) d[i] = Math.random() * 2 - 1;
-        const n = audioCtx.createBufferSource(); n.buffer = b;
-        const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06, audioCtx.currentTime);
-        n.connect(g).connect(audioCtx.destination); n.start();
-    }
-
-    function playSnd(freq, type, dur) {
-        if (!document.getElementById('sound-on').checked) return;
-        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
-        o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
-    }
-
-    // SON DE DÉFAITE V2.5.8 (Dégringolade)
-    function playFailSnd() {
-        if (!document.getElementById('sound-on').checked) return;
-        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = 'sawtooth'; o.frequency.setValueAtTime(150, audioCtx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.8);
-        g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
-        o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.8);
-    }
-
-    function getRandomPath() {
-        const p = []; const pts = 64; 
-        for(let i=0; i<pts; i++) {
-            let r = i/pts, x, y;
-            if (r < 0.25) { x = r*400; y = 4+Math.random()*6; } 
-            else if (r < 0.5) { x = 96-Math.random()*6; y = (r-0.25)*400; } 
-            else if (r < 0.75) { x = (1-(r-0.5)*4)*100; y = 96-Math.random()*6; } 
-            else { x = 4+Math.random()*6; y = (1-(r-0.75)*4)*100; }
-            p.push(`${x}% ${y}%`);
-        }
-        return `polygon(${p.join(',')})`;
-    }
-
-    function buy() {
-        if(solde < 10) { toggleModal('gameOverModal', true); return; }
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        solde -= 10; opened = 0; isGameOver = false;
-        document.getElementById('btn-buy').style.display = 'none';
-        document.getElementById('ev-display').style.display = 'block';
-        document.getElementById('res-zone').innerText = '';
-        init(); upd();
-    }
-
-    function init() {
-        const g = document.getElementById('grid'); g.innerHTML = '';
-        ticket = [50, 20, 20, 0, 0, 0, 0, 0, 0].sort(()=>Math.random()-0.5);
-        for(let i=0; i<9; i++) {
-            let s = document.createElement('div'); s.className = 'sq'; s.id = `sq-${i}`;
-            const coin = ticket[i] > 0 ? `<div class="win-coin">${ticket[i]}€</div>` : `<div class="loss-coin">0€</div>`;
-            s.innerHTML = `<div class="perm-bg"><div class="p-grey"></div><div class="p-green"></div>
-                <span class="ic ic-f ic-l">🔍</span><span class="ic ic-f ic-t">🎯</span></div>
-                <div class="reveal-layer"><div class="torn-wrapper" id="wrap-${i}"><div class="torn-hole" id="hole-${i}"></div></div><div class="coin-wrap">${coin}</div></div>
-                <div class="dual-btns" id="btns-${i}"><div class="z-s" onclick="handleScratch(${i})"><span class="ic ic-l">🔍</span></div><div class="z-b" onclick="placeBet(${i})"><span class="ic ic-t">🎯</span></div></div>`;
-            g.appendChild(s);
-        }
-    }
-
-    function handleScratch(idx) {
-        if(isGameOver || (9-opened <= 2)) return;
-        const sq = document.getElementById(`sq-${idx}`);
-        if(!sq.classList.contains('open')) {
-            solde -= 0.1; taxTotal += 0.1; opened++; sq.classList.add('open');
-            const wrap = document.getElementById(`wrap-${idx}`); const hole = document.getElementById(`hole-${idx}`);
-            wrap.style.clipPath = getRandomPath(); hole.classList.add('is-torn');
-            playScratchSnd();
+    <div id="rulesModal" class="modal">
+        <div class="modal-content">
+            <h2>Règles & Répartition</h2>
+            <p style="font-size: 0.9em; margin-bottom: 5px; color: #b3b3cc;">Chaque billet coûte <b>11.00€</b> et contient 9 cases :</p>
             
-            // --- LOGIQUE V2.5.8 : DÉCOMPTE DES GAINS DÉCOUVERTS ---
-            let lotsReveles = 0;
-            for(let i=0; i<9; i++) {
-                // On compte les cases ouvertes via la loupe (z-s) qui contiennent un gain
-                if(ticket[i] > 0 && document.getElementById(`sq-${i}`).classList.contains('open') && !document.getElementById(`sq-${i}`).classList.contains('final-win')) {
-                    lotsReveles++;
+            <table class="distrib-table">
+                <thead><tr><th>MONTANT</th><th>QUANTITÉ</th></tr></thead>
+                <tbody>
+                    <tr><td style="color:#ffd700; font-weight:bold;">50.00 €</td><td>1</td></tr>
+                    <tr><td style="color:#ffd700; font-weight:bold;">20.00 €</td><td>2</td></tr>
+                    <tr><td style="color:var(--text-muted);">0.00 €</td><td>6</td></tr>
+                </tbody>
+            </table>
+
+            <ul class="rules-list">
+                <li><b>Espérance :</b> Le bouton Encaisser affiche la moyenne mathématique des gains encore cachés.</li>
+                <li><b>Stratégie :</b> En révélant des cases à 0€, vous augmentez la valeur du Cashout.</li>
+                <li><b>Risque :</b> Si vous découvrez les <b>3 lots</b> (le 50€ et les deux 20€), le ticket est perdu (0€).</li>
+                <li><b>Engagement :</b> Vous devez gratter au moins une case pour débloquer le retrait.</li>
+            </ul>
+            
+            <button class="close-modal" onclick="toggleModal(false)">RETOUR AU RADAR</button>
+        </div>
+    </div>
+
+    <script>
+        const LOTS_CONFIG = [50, 20, 20, 0, 0, 0, 0, 0, 0];
+        let solde = 100.00, gridData = [], revealedCount = 0, lotsFoundCount = 0, gameOver = true, currentLotsInPlay = [];
+
+        function toggleModal(show) { document.getElementById('rulesModal').style.display = show ? 'flex' : 'none'; }
+
+        function buyTicket() {
+            if (solde < 11) return alert("Solde insuffisant !");
+            solde -= 11;
+            gridData = [...LOTS_CONFIG].sort(() => Math.random() - 0.5);
+            currentLotsInPlay = [...LOTS_CONFIG].filter(v => v > 0);
+            revealedCount = 0; lotsFoundCount = 0; gameOver = false;
+            document.getElementById('footer-ui').innerHTML = '';
+            document.getElementById('btn-cashout').disabled = true;
+            generateGrid();
+            updateUI();
+        }
+
+        function generateGrid() {
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                const val = gridData[i];
+                let coin = document.createElement('div');
+                coin.className = val > 0 ? 'coin coin-win' : 'coin coin-loss';
+                coin.innerText = val + '€';
+                cell.appendChild(coin);
+                let canvas = document.createElement('canvas');
+                canvas.className = 'scratch-canvas';
+                cell.appendChild(canvas);
+                initVernis(canvas);
+                cell.onclick = () => { if(!gameOver) triggerFracture(canvas, i); };
+                gridEl.appendChild(cell);
+            }
+        }
+
+        function initVernis(canvas) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = 130; canvas.height = 130;
+            ctx.fillStyle = '#4a4a4a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#555';
+            for(let i=0; i<200; i++) ctx.fillRect(Math.random()*130, Math.random()*130, 1, 1);
+        }
+
+        function triggerFracture(canvas, index) {
+            if (canvas.hasAttribute('data-revealed') || gameOver) return;
+            canvas.setAttribute('data-revealed', 'true');
+            canvas.parentElement.classList.add('revealed');
+            const ctx = canvas.getContext('2d');
+            const cx = canvas.width / 2; const cy = canvas.height / 2;
+            const sides = 24; const points = [];
+            for (let i = 0; i < sides; i++) {
+                const angle = (i / sides) * Math.PI * 2;
+                const r = 62 * (0.85 + Math.random() * 0.3);
+                points.push({x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r});
+            }
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < sides; i++) ctx.lineTo(points[i].x, points[i].y);
+            ctx.closePath(); ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 3; ctx.stroke();
+            handleReveal(index);
+        }
+
+        function handleReveal(index) {
+            const val = gridData[index];
+            revealedCount++;
+            if (val > 0) {
+                lotsFoundCount++;
+                const lotIdx = currentLotsInPlay.indexOf(val);
+                if (lotIdx > -1) currentLotsInPlay.splice(lotIdx, 1);
+            }
+            if (revealedCount === 1) document.getElementById('btn-cashout').disabled = false;
+            if (lotsFoundCount === 3) finishGame(0, "TICKET PERDU (3 GAINS)");
+            else if (revealedCount === 8) finishGame(calculateEsperance(), "FIN DE PARTIE");
+            else updateUI();
+        }
+
+        function calculateEsperance() {
+            const sum = currentLotsInPlay.reduce((a, b) => a + b, 0);
+            const hidden = 9 - revealedCount;
+            return (hidden > 0) ? (sum / hidden) : 0;
+        }
+
+        function updateUI() {
+            document.getElementById('btn-val-esperance').innerText = calculateEsperance().toFixed(2) + " €";
+            document.getElementById('display-solde').innerText = solde.toFixed(2) + " €";
+        }
+
+        function cashOut() { if (!gameOver) finishGame(calculateEsperance(), "CASH OUT RÉUSSI"); }
+
+        function finishGame(amount, reason) {
+            gameOver = true;
+            solde += amount;
+            updateUI();
+            document.getElementById('btn-cashout').disabled = true;
+            const color = amount > 0 ? "var(--primary)" : "var(--danger)";
+            document.getElementById('footer-ui').innerHTML = `
+                <div class="end-card" style="border-color: ${color}; background: var(--panel); border: 1px solid ${color}; padding: 15px; border-radius: 15px; text-align: center; animation: slideUp 0.3s ease-out;">
+                    <div style="font-size:0.75em; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">${reason}</div>
+                    <div style="font-size:1.6em; font-weight:bold; color:${color}">+ ${amount.toFixed(2)} €</div>
+                    <button class="btn-new" onclick="buyTicket()">NOUVEAU BILLET</button>
+                </div>`;
+            document.querySelectorAll('canvas').forEach((c) => {
+                if(!c.hasAttribute('data-revealed')) {
+                    c.style.opacity = "0";
+                    setTimeout(() => c.remove(), 500);
                 }
-            }
-
-            // SI LES 3 LOTS SONT GRATTÉS : ÉCHEC DE LA STRATÉGIE
-            if(lotsReveles === 3) {
-                sq.classList.add('final-loss'); 
-                playFailSnd();
-                finish(0, "TICKET ÉPUISÉ (3 LOTS SORTIS)");
-                return;
-            }
-            
-            upd();
+            });
         }
-    }
-
-    function placeBet(idx) {
-        if(isGameOver) return;
-        solde -= 0.1; taxTotal += 0.1; const v = ticket[idx]; solde += v;
-        const sq = document.getElementById(`sq-${idx}`); const wrap = document.getElementById(`wrap-${idx}`); const hole = document.getElementById(`hole-${idx}`);
-        wrap.style.clipPath = getRandomPath(); hole.classList.add('is-torn');
-        sq.classList.add('open', v > 0 ? 'final-win' : 'final-loss');
-        playSnd(v > 0 ? 880 : 110, v > 0 ? 'triangle' : 'square', 0.6);
-        finish(v, v > 0 ? `GAGNÉ +${v}€` : "PERDU");
-    }
-
-    function finish(v, m) {
-        isGameOver = true; document.getElementById('ev-display').style.display = 'none';
-        const rz = document.getElementById('res-zone'); rz.innerText = m; rz.style.color = v > 0 ? '#27ae60' : '#e74c3c';
-        for(let i=0; i<9; i++) {
-            const sq = document.getElementById(`sq-${i}`); if(!sq.classList.contains('open')) sq.classList.add('open', 'reveal-all');
-            const btns = document.getElementById(`btns-${i}`); if(btns) btns.style.display = 'none';
-        }
-        setTimeout(()=> { document.getElementById('btn-buy').style.display = 'block'; if(solde < 10) toggleModal('gameOverModal', true); }, 1200);
-        upd();
-    }
-
-    function upd() { 
-        document.getElementById('bal').innerText = solde.toFixed(2) + " €"; 
-        document.getElementById('tax').innerText = taxTotal.toFixed(2) + " €";
-        let rv = 0, rc = 0; for(let i=0; i<9; i++) if(!document.getElementById(`sq-${i}`).classList.contains('open')) { rv += ticket[i]; rc++; }
-        document.getElementById('ev-display').innerText = `ESPÉRANCE : ${(rc > 0 ? rv/rc : 0).toFixed(2)}€`;
-        if(opened === 7 && !isGameOver) {
-            for(let i=0; i<9; i++) if(!document.getElementById(`sq-${i}`).classList.contains('open')) {
-                document.getElementById(`btns-${i}`).innerHTML = `<div class="final-bet-overlay" onclick="placeBet(${i})"><span>🎯</span></div>`;
-            }
-        }
-    }
-</script>
+        buyTicket();
+    </script>
 </body>
 </html>
