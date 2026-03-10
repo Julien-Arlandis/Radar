@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR v4.9 - Chromatic Harmony</title>
+    <title>RADAR v5.1 - Transparent Pricing</title>
     <style>
         :root { 
-            --primary: #4ecca3; /* Cyan clair */
-            --danger: #e94560;  /* Rouge Cerise */
-            --bg: #1a1a2e;      /* Indigo très sombre */
-            --panel: rgba(22, 33, 62, 0.95); /* Indigo sombre transparent */
-            --border: #3c3c5e;  /* Indigo gris clair pour bordures */
-            --text-muted: #8888b3; /* Indigo gris très clair pour texte muted */
+            --primary: #4ecca3; 
+            --danger: #e94560;  
+            --bg: #1a1a2e;      
+            --panel: rgba(22, 33, 62, 0.95); 
+            --border: #3c3c5e;  
+            --text-muted: #8888b3; 
         }
         * { box-sizing: border-box; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent; }
         
@@ -21,7 +21,6 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* HEADER AVEC SOLDE EN HAUT */
         .header-ui { 
             width: 100%; max-width: 400px; background: var(--panel); padding: 15px; 
             border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); 
@@ -51,7 +50,6 @@
         
         .cashout-text, .cashout-val { font-size: 1.3em; letter-spacing: 0.5px; }
 
-        /* GRILLE FIGÉE */
         .game-area { width: 100%; max-width: 400px; height: 410px; display: flex; flex-direction: column; flex-shrink: 0; justify-content: center; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; height: 400px; width: 100%; }
         
@@ -73,20 +71,19 @@
         }
         .btn-new:hover { background: #ff506b; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(233, 69, 96, 0.3); }
 
-        /* MODAL RÈGLES EXPLICITES */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(6px); justify-content: center; align-items: center; }
-        .modal-content { background: #16213e; padding: 25px; border-radius: 20px; border: 1px solid rgba(78, 204, 163, 0.2); max-width: 360px; width: 92%; line-height: 1.4; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
-        .modal-content h2 { color: var(--primary); margin: 0 0 15px 0; font-size: 1.4em; border-bottom: 1px solid #2d2d44; padding-bottom: 10px; text-shadow: 0 0 10px rgba(78,204,163,0.2); }
-        
+        .modal-content { background: #16213e; padding: 25px; border-radius: 20px; border: 1px solid rgba(78, 204, 163, 0.2); max-width: 360px; width: 92%; line-height: 1.4; box-shadow: 0 10px 40px rgba(0,0,0,0.7); animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .modal-content h2 { color: var(--primary); margin: 0 0 15px 0; font-size: 1.4em; border-bottom: 1px solid #2d2d44; padding-bottom: 10px; }
         .distrib-table { width: 100%; margin: 15px 0; border-collapse: collapse; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; border: 1px solid #2d2d44; }
         .distrib-table th, .distrib-table td { padding: 10px; border: 1px solid #2d2d44; text-align: center; }
-        .distrib-table th { background: rgba(78, 204, 163, 0.05); color: var(--primary); font-size: 0.8em; letter-spacing: 0.5px; }
+        .distrib-table th { background: rgba(78, 204, 163, 0.05); color: var(--primary); font-size: 0.8em; }
 
-        .rules-list { padding-left: 18px; font-size: 0.85em; color: #b3b3cc; }
-        .rules-list li { margin-bottom: 8px; }
-
-        .close-modal { background: var(--primary); color: #0a0a1a; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(78, 204, 163, 0.2); }
-        .close-modal:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .close-modal, .recharge-modal { background: var(--primary); color: #0a0a1a; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(78, 204, 163, 0.2); }
+        .recharge-modal { background: var(--danger); color: white; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.2); }
+        
+        .modal-btn-alt { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 10px; margin-top: 10px; width: 100%; border-radius: 10px; cursor: pointer; }
 
         @keyframes slideUp { 0% { transform: translateY(15px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
     </style>
@@ -95,13 +92,13 @@
 
     <div class="header-ui">
         <div class="top-bar">
-            <button class="btn-rules" onclick="toggleModal(true)">RÈGLES & GAINS</button>
+            <button class="btn-rules" onclick="toggleModal('rulesModal', true)">RÈGLES & GAINS</button>
             <div class="solde-container">
                 <span class="solde-label">SOLDE</span>
                 <span id="display-solde" class="solde-val">100.00 €</span>
             </div>
         </div>
-        <button id="btn-cashout" class="btn-cashout" onclick="cashOut()" disabled>
+        <button id="btn-cashout" class="btn-cashout" onclick="cashOut()" disabled title="Grattez une case pour encaisser">
             <span class="cashout-text">ENCAISSER</span>
             <span id="btn-val-esperance" class="cashout-val">11.00 €</span>
         </button>
@@ -111,13 +108,14 @@
         <div class="grid" id="grid"></div>
     </div>
 
-    <div id="footer-ui" class="footer-ui"></div>
+    <div id="footer-ui" class="footer-ui">
+        <button class="btn-new" onclick="buyTicket()" id="btn-initial-buy">ACHETER UN BILLET (11.00 €)</button>
+    </div>
 
     <div id="rulesModal" class="modal">
         <div class="modal-content">
             <h2>Règles & Répartition</h2>
-            <p style="font-size: 0.9em; margin-bottom: 5px; color: #b3b3cc;">Chaque billet coûte <b>11.00€</b> et contient 9 cases :</p>
-            
+            <p style="font-size: 0.9em; color: #b3b3cc;">Prix du billet : <b>11.00 €</b></p>
             <table class="distrib-table">
                 <thead><tr><th>MONTANT</th><th>QUANTITÉ</th></tr></thead>
                 <tbody>
@@ -126,15 +124,18 @@
                     <tr><td style="color:var(--text-muted);">0.00 €</td><td>6</td></tr>
                 </tbody>
             </table>
+            <p style="font-size: 0.85em; color: #b3b3cc;">• Encaissez l'espérance à tout moment.<br>• 3 lots trouvés = Ticket perdu (0€).</p>
+            <button class="close-modal" onclick="toggleModal('rulesModal', false)">RETOUR AU RADAR</button>
+        </div>
+    </div>
 
-            <ul class="rules-list">
-                <li><b>Espérance :</b> Le bouton Encaisser affiche la moyenne mathématique des gains encore cachés.</li>
-                <li><b>Stratégie :</b> En révélant des cases à 0€, vous augmentez la valeur du Cashout.</li>
-                <li><b>Risque :</b> Si vous découvrez les <b>3 lots</b> (le 50€ et les deux 20€), le ticket est perdu (0€).</li>
-                <li><b>Engagement :</b> Vous devez gratter au moins une case pour débloquer le retrait.</li>
-            </ul>
-            
-            <button class="close-modal" onclick="toggleModal(false)">RETOUR AU RADAR</button>
+    <div id="bankruptModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <div style="font-size: 3em; margin-bottom: 10px;">📉</div>
+            <h2 style="color: var(--danger); border-color: var(--danger);">Solde Insuffisant</h2>
+            <p style="color: #b3b3cc;">Vous n'avez plus assez de fonds pour acheter un billet (11.00 €).</p>
+            <button class="recharge-modal" onclick="recharge(100)">RECHARGER 100.00 €</button>
+            <button class="modal-btn-alt" onclick="toggleModal('bankruptModal', false)">ANNULER</button>
         </div>
     </div>
 
@@ -142,10 +143,19 @@
         const LOTS_CONFIG = [50, 20, 20, 0, 0, 0, 0, 0, 0];
         let solde = 100.00, gridData = [], revealedCount = 0, lotsFoundCount = 0, gameOver = true, currentLotsInPlay = [];
 
-        function toggleModal(show) { document.getElementById('rulesModal').style.display = show ? 'flex' : 'none'; }
+        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+
+        function recharge(amount) {
+            solde += amount;
+            updateUI();
+            toggleModal('bankruptModal', false);
+        }
 
         function buyTicket() {
-            if (solde < 11) return alert("Solde insuffisant !");
+            if (solde < 11) {
+                toggleModal('bankruptModal', true);
+                return;
+            }
             solde -= 11;
             gridData = [...LOTS_CONFIG].sort(() => Math.random() - 0.5);
             currentLotsInPlay = [...LOTS_CONFIG].filter(v => v > 0);
@@ -193,12 +203,11 @@
             const sides = 24; const points = [];
             for (let i = 0; i < sides; i++) {
                 const angle = (i / sides) * Math.PI * 2;
-                const r = 62 * (0.85 + Math.random() * 0.3);
+                const r = 60 * (0.85 + Math.random() * 0.3);
                 points.push({x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r});
             }
             ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
+            ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
             for (let i = 1; i < sides; i++) ctx.lineTo(points[i].x, points[i].y);
             ctx.closePath(); ctx.fill();
             ctx.globalCompositeOperation = 'source-over';
@@ -234,25 +243,21 @@
         function cashOut() { if (!gameOver) finishGame(calculateEsperance(), "CASH OUT RÉUSSI"); }
 
         function finishGame(amount, reason) {
-            gameOver = true;
-            solde += amount;
-            updateUI();
+            gameOver = true; solde += amount; updateUI();
             document.getElementById('btn-cashout').disabled = true;
             const color = amount > 0 ? "var(--primary)" : "var(--danger)";
             document.getElementById('footer-ui').innerHTML = `
                 <div class="end-card" style="border-color: ${color}; background: var(--panel); border: 1px solid ${color}; padding: 15px; border-radius: 15px; text-align: center; animation: slideUp 0.3s ease-out;">
-                    <div style="font-size:0.75em; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">${reason}</div>
+                    <div style="font-size:0.75em; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase;">${reason}</div>
                     <div style="font-size:1.6em; font-weight:bold; color:${color}">+ ${amount.toFixed(2)} €</div>
-                    <button class="btn-new" onclick="buyTicket()">NOUVEAU BILLET</button>
+                    <button class="btn-new" onclick="buyTicket()">ACHETER UN BILLET (11.00 €)</button>
                 </div>`;
             document.querySelectorAll('canvas').forEach((c) => {
                 if(!c.hasAttribute('data-revealed')) {
-                    c.style.opacity = "0";
-                    setTimeout(() => c.remove(), 500);
+                    c.style.opacity = "0"; setTimeout(() => c.remove(), 500);
                 }
             });
         }
-        buyTicket();
     </script>
 </body>
 </html>
