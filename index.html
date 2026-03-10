@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR v6.2 - Full Integrity</title>
+    <title>RADAR v6.3 - Ultimate Version</title>
     <style>
         :root { --primary: #4ecca3; --danger: #e94560; --bg: #1a1a2e; --panel: rgba(22, 33, 62, 0.95); --border: #3c3c5e; }
         * { box-sizing: border-box; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent; }
@@ -42,14 +42,12 @@
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
         .modal-content { background: #16213e; padding: 25px; border-radius: 20px; border: 1px solid var(--primary); max-width: 380px; width: 95%; max-height: 90vh; overflow-y: auto; }
         .modal-content h2 { color: var(--primary); margin: 0 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.3em; }
-        .modal-content h3 { color: var(--primary); font-size: 0.9em; margin: 15px 0 5px 0; text-transform: uppercase; }
         .distrib-table { width: 100%; margin: 10px 0; border-collapse: collapse; background: rgba(0,0,0,0.3); }
         .distrib-table td { padding: 8px; border: 1px solid #333; text-align: center; font-size: 0.85em; }
         .rules-text { font-size: 0.82em; line-height: 1.4; color: #b3b3cc; margin: 10px 0; }
         
-        .close-modal, .recharge-modal { width: 100%; padding: 12px; background: var(--primary); color: #1a1a2e; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .close-modal, .recharge-modal { width: 100%; padding: 12px; background: var(--primary); color: #1a1a2e; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(78, 204, 163, 0.2); }
         .recharge-modal { background: var(--danger); color: white; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.2); }
-        .recharge-modal:hover { transform: translateY(-2px); filter: brightness(1.1); }
     </style>
 </head>
 <body>
@@ -76,22 +74,17 @@
         <div class="modal-content">
             <h2>Notice & Stratégie</h2>
             <div class="rules-text">Prix du billet : <b>11.00 €</b></div>
-            
-            <h3>Répartition des Gains</h3>
             <table class="distrib-table">
                 <tr style="font-weight:bold; color:var(--primary)"><td>Lots</td><td>Nombre</td><td>Probabilité</td></tr>
                 <tr><td>50.00 €</td><td>1 lot</td><td>11.1%</td></tr>
                 <tr><td>20.00 €</td><td>2 lots</td><td>22.2%</td></tr>
                 <tr><td>0.00 €</td><td>6 lots</td><td>66.6%</td></tr>
             </table>
-
-            <h3>Stratégie & Espérance</h3>
             <div class="rules-text">
-                • <b>L'Espérance :</b> Le montant d'encaissement est la moyenne mathématique des gains encore cachés. C'est la valeur "juste" du ticket à l'instant T.<br><br>
-                • <b>Stratégie :</b> Cherchez à découvrir les cases à <b>0€</b>. Chaque "0€" révélé augmente mécaniquement la rareté et la valeur des lots restants, faisant monter le prix de sortie.<br><br>
-                • <b>Risque :</b> Attention ! Si vous découvrez les <b>3 lots gagnants</b> (le 50€ et les deux 20€), le ticket s'autodétruit et votre gain tombe à <b>0€</b>.
+                • <b>L'Espérance :</b> Valeur moyenne mathématique des lots cachés.<br><br>
+                • <b>Stratégie :</b> Éliminez les 0€ pour faire monter le Cash Out.<br><br>
+                • <b>Risque :</b> 3 lots trouvés = Ticket perdu (0€).
             </div>
-            
             <button class="close-modal" onclick="toggleModal('rulesModal', false)">J'AI COMPRIS</button>
         </div>
     </div>
@@ -216,7 +209,7 @@
             document.getElementById('footer-ui').innerHTML = `
                 <div style="border: 1px solid ${color}; background: var(--panel); padding: 15px; border-radius: 15px; text-align: center;">
                     <div style="font-size:1.4em; font-weight:bold; color:${color}">${reason} : +${amount.toFixed(2)}€</div>
-                    <button class="btn-new" onclick="buyTicket()">ACHETER UN BILLET (11.00 €)</button>
+                    <button class="btn-new" onclick="buyTicket()">NOUVEAU BILLET (11.00 €)</button>
                 </div>`;
             document.querySelectorAll('canvas').forEach(c => { if(!c.hasAttribute('data-revealed')) c.remove(); });
             document.getElementById('btn-cashout').disabled = true;
