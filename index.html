@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR v6.3 - Ultimate Version</title>
+    <title>RADAR v6.5 - Spelling Fix</title>
     <style>
         :root { --primary: #4ecca3; --danger: #e94560; --bg: #1a1a2e; --panel: rgba(22, 33, 62, 0.95); --border: #3c3c5e; }
         * { box-sizing: border-box; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent; }
@@ -19,8 +19,10 @@
         .mute-box { display: flex; align-items: center; gap: 5px; color: #666; font-size: 0.7em; cursor: pointer; user-select: none; }
         .mute-box input { cursor: pointer; accent-color: var(--primary); margin: 0; }
 
-        .solde-val { color: var(--primary); font-weight: bold; font-size: 1.2em; }
-        
+        .solde-container { text-align: right; }
+        .solde-val { color: var(--primary); font-weight: bold; font-size: 1.2em; display: block; }
+        .stats-label { color: #666; font-size: 0.65em; text-transform: uppercase; display: block; margin-top: 2px; }
+
         .btn-cashout { background: var(--primary); color: #1a1a2e; border: none; padding: 15px; border-radius: 12px; font-weight: 900; width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(78,204,163,0.2); }
         .btn-cashout:hover:not(:disabled) { transform: translateY(-3px); filter: brightness(1.1); box-shadow: 0 8px 25px rgba(78,204,163,0.4); }
         .btn-cashout:disabled { background: #3c3c5e !important; opacity: 0.5; cursor: default; }
@@ -58,7 +60,10 @@
                 <button class="btn-rules" onclick="toggleModal('rulesModal', true)">RÈGLES DU JEU</button>
                 <label class="mute-box"><input type="checkbox" id="muteCheck"> SILENCIEUX</label>
             </div>
-            <div class="solde-container"><span style="color:#888; font-size:0.8em;">SOLDE </span><span id="display-solde" class="solde-val">100.00 €</span></div>
+            <div class="solde-container">
+                <span style="color:#888; font-size:0.8em;">SOLDE </span><span id="display-solde" class="solde-val">100.00 €</span>
+                <span class="stats-label">Banque: <span id="display-banque" style="color:#e94560">0.00 €</span> | Billets: <span id="display-tickets" style="color:white">0</span></span>
+            </div>
         </div>
         <button id="btn-cashout" class="btn-cashout" onclick="cashOut()" disabled>
             <span>ENCAISSER</span> <span id="btn-val-esperance">11.00 €</span>
@@ -129,7 +134,8 @@
         }
 
         const LOTS_CONFIG = [50, 20, 20, 0, 0, 0, 0, 0, 0];
-        let solde = 100.00, gridData = [], revealedCount = 0, lotsFoundCount = 0, gameOver = true, currentLotsInPlay = [];
+        let solde = 100.00, banque = 0.00, ticketsCount = 0;
+        let gridData = [], revealedCount = 0, lotsFoundCount = 0, gameOver = true, currentLotsInPlay = [];
 
         function toggleModal(id, show) { if (audioCtx.state === 'suspended') audioCtx.resume(); document.getElementById(id).style.display = show ? 'flex' : 'none'; }
         
@@ -141,7 +147,8 @@
         function buyTicket() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (solde < 11) { toggleModal('bankruptModal', true); return; }
-            solde -= 11; gridData = [...LOTS_CONFIG].sort(() => Math.random() - 0.5);
+            solde -= 11; banque += 11; ticketsCount++;
+            gridData = [...LOTS_CONFIG].sort(() => Math.random() - 0.5);
             currentLotsInPlay = [...LOTS_CONFIG].filter(v => v > 0);
             revealedCount = 0; lotsFoundCount = 0; gameOver = false;
             document.getElementById('footer-ui').innerHTML = '';
@@ -199,9 +206,15 @@
         function updateUI() {
             document.getElementById('btn-val-esperance').innerText = calculateEsperance().toFixed(2) + " €";
             document.getElementById('display-solde').innerText = solde.toFixed(2) + " €";
+            document.getElementById('display-banque').innerText = banque.toFixed(2) + " €";
+            document.getElementById('display-tickets').innerText = ticketsCount;
         }
 
-        function cashOut() { if (!gameOver) finishGame(calculateEsperance(), "ENCÀISSEMENT"); }
+        function cashOut() { if (!gameOver) { 
+            const gain = calculateEsperance();
+            banque -= gain;
+            finishGame(gain, "ENCAISSEMENT"); 
+        } }
 
         function finishGame(amount, reason) {
             gameOver = true; solde += amount; updateUI(); playEndSound(amount > 0);
@@ -209,7 +222,7 @@
             document.getElementById('footer-ui').innerHTML = `
                 <div style="border: 1px solid ${color}; background: var(--panel); padding: 15px; border-radius: 15px; text-align: center;">
                     <div style="font-size:1.4em; font-weight:bold; color:${color}">${reason} : +${amount.toFixed(2)}€</div>
-                    <button class="btn-new" onclick="buyTicket()">NOUVEAU BILLET (11.00 €)</button>
+                    <button class="btn-new" onclick="buyTicket()">ACHETER UN BILLET (11.00 €)</button>
                 </div>`;
             document.querySelectorAll('canvas').forEach(c => { if(!c.hasAttribute('data-revealed')) c.remove(); });
             document.getElementById('btn-cashout').disabled = true;
