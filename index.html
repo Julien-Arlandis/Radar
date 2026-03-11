@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR v6.5 - Spelling Fix</title>
+    <title>RADAR v6.6 - Bank Logic Fix</title>
     <style>
         :root { --primary: #4ecca3; --danger: #e94560; --bg: #1a1a2e; --panel: rgba(22, 33, 62, 0.95); --border: #3c3c5e; }
         * { box-sizing: border-box; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent; }
@@ -191,16 +191,27 @@
 
         function handleReveal(index) {
             revealedCount++;
-            if (gridData[index] > 0) { lotsFoundCount++; currentLotsInPlay.splice(currentLotsInPlay.indexOf(gridData[index]), 1); }
+            if (gridData[index] > 0) {
+                lotsFoundCount++;
+                currentLotsInPlay.splice(currentLotsInPlay.indexOf(gridData[index]), 1);
+            }
             document.getElementById('btn-cashout').disabled = false;
-            if (lotsFoundCount === 3) finishGame(0, "TICKET PERDU");
-            else if (revealedCount === 8) finishGame(calculateEsperance(), "FIN DE PARTIE");
-            else updateUI();
+            
+            if (lotsFoundCount === 3) {
+                finishGame(0, "TICKET PERDU");
+            } else if (revealedCount === 8) {
+                // Si on gagne sur la dernière case, on calcule le gain final
+                const gainFinal = calculateEsperance();
+                finishGame(gainFinal, "FIN DE PARTIE");
+            } else {
+                updateUI();
+            }
         }
 
         function calculateEsperance() {
             const sum = currentLotsInPlay.reduce((a, b) => a + b, 0);
-            return (9 - revealedCount) > 0 ? sum / (9 - revealedCount) : 0;
+            const casesRestantes = 9 - revealedCount;
+            return casesRestantes > 0 ? sum / casesRestantes : 0;
         }
 
         function updateUI() {
@@ -210,14 +221,22 @@
             document.getElementById('display-tickets').innerText = ticketsCount;
         }
 
-        function cashOut() { if (!gameOver) { 
-            const gain = calculateEsperance();
-            banque -= gain;
-            finishGame(gain, "ENCAISSEMENT"); 
-        } }
+        function cashOut() { 
+            if (!gameOver) { 
+                const gain = calculateEsperance();
+                finishGame(gain, "ENCAISSEMENT"); 
+            } 
+        }
 
         function finishGame(amount, reason) {
-            gameOver = true; solde += amount; updateUI(); playEndSound(amount > 0);
+            gameOver = true;
+            // Centralisation de la mise à jour financière
+            banque -= amount;
+            solde += amount;
+            
+            updateUI();
+            playEndSound(amount > 0);
+            
             const color = amount > 0 ? "var(--primary)" : "var(--danger)";
             document.getElementById('footer-ui').innerHTML = `
                 <div style="border: 1px solid ${color}; background: var(--panel); padding: 15px; border-radius: 15px; text-align: center;">
